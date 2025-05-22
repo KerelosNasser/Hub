@@ -6,10 +6,10 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import '../todo/todoComponents/addTask/CustomTextFormField.dart';
 import 'controller.dart';
 import 'drawing-canva.dart';
 import 'note_model.dart';
+import 'CustomTextFormField.dart';
 
 class NoteEditScreen extends StatefulWidget {
   final Note? note;
@@ -98,7 +98,8 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     final buffer = byteData!.buffer.asUint8List();
 
     final tempDir = await getTemporaryDirectory();
-    final file = File('${tempDir.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png');
+    final file = File(
+        '${tempDir.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png');
     await file.writeAsBytes(buffer);
 
     setState(() => _drawingPath = file.path);
@@ -134,7 +135,10 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         backgroundColor: Colors.pink.shade800,
         title: Text(
           widget.note == null ? 'New Note' : 'Edit Note',
-          style: TextStyle(color: Color(0xffedf3ff), fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Color(0xffedf3ff),
+              fontSize: 24,
+              fontWeight: FontWeight.bold),
         ),
         scrolledUnderElevation: 0,
         actions: [
@@ -149,46 +153,58 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Title field
             CustomTextFormField(
               controller: _titleController,
               label: 'Title',
+              prefixIcon: Icons.title,
               maxLines: 1,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a title';
+                }
+                return null;
+              },
             ),
-             SizedBox(height: context.mediaQuerySize.height *.02),
             CustomTextFormField(
               controller: _descController,
-              maxLines: 5,
               label: 'Description',
+              prefixIcon: Icons.description,
+              maxLines: 5,
+              showCounter: true,
             ),
-             SizedBox(height: context.mediaQuerySize.height *.02),
+            SizedBox(height: context.mediaQuerySize.height * .02),
             Row(
               children: [
                 Expanded(
                   child: _imagePath != null
                       ? Image.file(File(_imagePath!))
                       : Center(
-                    child: Container(
-                      height: context.mediaQuerySize.height *.2,
-                      width: context.mediaQuerySize.width *.6,
-                      decoration: BoxDecoration(
-                        color: Color(0xffedf3ff),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: Colors.pinkAccent,
-                          strokeAlign: 1,
+                          child: Container(
+                            height: context.mediaQuerySize.height * .2,
+                            width: context.mediaQuerySize.width * .6,
+                            decoration: BoxDecoration(
+                              color: Color(0xffedf3ff),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: Colors.pinkAccent,
+                                strokeAlign: 1,
+                              ),
+                            ),
+                            child: Center(
+                                child: Text('No image yet',
+                                    textAlign: TextAlign.center)),
+                          ),
                         ),
-                      ),
-                      child: Center(child: Text('No image yet', textAlign: TextAlign.center)),
-                    ),
-                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.photo_camera_back_outlined, color: Colors.white),
+                  icon: const Icon(Icons.photo_camera_back_outlined,
+                      color: Colors.white),
                   onPressed: _pickImage,
                 ),
               ],
             ),
-            SizedBox(height: context.mediaQuerySize.height *0.02),
+            SizedBox(height: context.mediaQuerySize.height * 0.02),
             Container(
               height: context.mediaQuerySize.height * 0.7,
               width: context.mediaQuerySize.width,
@@ -238,7 +254,8 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                 },
                 child: CustomPaint(
                   size: Size.infinite,
-                  painter: DrawingPainter(_drawingPoints, backgroundImage: _loadedDrawing),
+                  painter: DrawingPainter(_drawingPoints,
+                      backgroundImage: _loadedDrawing),
                 ),
               ),
             ),
@@ -263,7 +280,8 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Pick a color', style: TextStyle(color: Colors.white)),
+                        title: const Text('Pick a color',
+                            style: TextStyle(color: Colors.white)),
                         backgroundColor: Color(0x3f000000),
                         content: ColorPicker(
                           pickerColor: _selectedColor,
@@ -274,13 +292,15 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Done', style: TextStyle(color: Color(0xffedf3ff))),
+                            child: const Text('Done',
+                                style: TextStyle(color: Color(0xffedf3ff))),
                           ),
                         ],
                       ),
                     );
                   },
-                  child: const Text('Color', style: TextStyle(color: Colors.pink)),
+                  child:
+                      const Text('Color', style: TextStyle(color: Colors.pink)),
                 ),
                 Slider(
                   activeColor: Colors.pink.shade500,
@@ -311,7 +331,8 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                       _drawingPath = null;
                     });
                   },
-                  child: const Text('Clear', style: TextStyle(color: Colors.pink)),
+                  child:
+                      const Text('Clear', style: TextStyle(color: Colors.pink)),
                 ),
               ],
             ),

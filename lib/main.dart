@@ -1,8 +1,4 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:farahs_hub/todo/TaskModels/task_model.dart';
-import 'package:farahs_hub/todo/notification-controller.dart';
-import 'package:farahs_hub/todo/task%20controller.dart';
-import 'package:farahs_hub/todo/todoScreens/to-do-main.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -24,26 +20,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  Hive.registerAdapter(TaskAdapter());
-  await Hive.openBox('tasks');
 
   final box = GetStorage();
 
   AwesomeNotifications().initialize(
       'resource://drawable/ic_notification',
       [
-        NotificationChannel(
-          channelGroupKey: 'basic_channel_group',
-          channelKey: 'basic_channel',
-          channelName: 'Basic notifications',
-          channelDescription: 'Notification channel for basic tests',
-          importance: NotificationImportance.High,
-          playSound: true,
-          enableLights: true,
-          locked: true,
-          criticalAlerts: true,
-          enableVibration: true,
-        ),
         NotificationChannel(
           channelKey: 'daily_lessons',
           channelName: 'Daily Lessons',
@@ -127,8 +109,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "Farah's Hub",
       initialBinding: BindingsBuilder(() {
-        Get.put(NotificationController());
-        Get.put(TaskController());
         Get.put(LessonController());
         Get.put(FarahhubController());
         Get.put(AppLauncherService());
@@ -137,11 +117,10 @@ class MyApp extends StatelessWidget {
       initialRoute: hasCompletedOnboarding ? '/hub' : '/onboarding',
       getPages: [
         GetPage(name: '/onboarding', page: () => const OnBoardingPage()),
-        GetPage(name: '/hub', page: () => const FarahHub()),
+        GetPage(name: '/hub', page: () => FarahHub()),
         GetPage(name: '/chatgpt', page: () => FreeAIToolsPage()),
         GetPage(name: '/lessons', page: () => LessonScreen()),
         GetPage(name: '/notes', page: () => NoteListScreen()),
-        GetPage(name: '/todo', page: () => ToDoPage()),
       ],
     );
   }
@@ -156,10 +135,13 @@ class NavigationController extends GetxController {
 }
 
 class FarahHub extends StatelessWidget {
-  const FarahHub({super.key});
+  final FarahhubController farahhubController = Get.put(FarahhubController());
+
+  FarahHub({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final AppLauncherService appLauncherService = AppLauncherService();
     final NavigationController navController = Get.put(NavigationController());
 
     return Scaffold(
@@ -172,6 +154,16 @@ class FarahHub extends StatelessWidget {
                 fontSize: 24,
                 fontWeight: FontWeight.w700),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.replay_circle_filled_outlined,
+                  color: Color(0xffedf3ff)),
+              tooltip: 'Replay Onboarding',
+              onPressed: () {
+                farahhubController.replayOnboarding();
+              },
+            ),
+          ],
           backgroundColor: Colors.pink.shade800),
       body: Obx(() {
         return IndexedStack(
@@ -179,7 +171,6 @@ class FarahHub extends StatelessWidget {
           children: [
             FarahhubScreen(),
             NoteListScreen(),
-            ToDoPage(),
             LessonScreen(),
             FreeAIToolsPage(),
           ],
@@ -191,6 +182,49 @@ class FarahHub extends StatelessWidget {
           onTap: navController.onTabSelected,
         );
       }),
+    );
+  }
+}
+
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final box = GetStorage();
+    final bool hasCompletedOnboarding =
+        box.read('hasCompletedOnboarding') ?? false;
+
+    // Ensure FarahhubController is registered if not already
+    // This is important if MainApp can be rebuilt and FarahHub is not in the tree yet.
+    Get.put(FarahhubController(), permanent: true);
+
+    return GetMaterialApp(
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English
+        Locale('ar', ''), // Arabic
+      ],
+      debugShowCheckedModeBanner: false,
+      title: "Farah's Hub",
+      initialBinding: BindingsBuilder(() {
+        Get.put(LessonController());
+        Get.put(FarahhubController());
+        Get.put(AppLauncherService());
+        Get.put(NoteController());
+      }),
+      initialRoute: hasCompletedOnboarding ? '/hub' : '/onboarding',
+      getPages: [
+        GetPage(name: '/onboarding', page: () => const OnBoardingPage()),
+        GetPage(name: '/hub', page: () => FarahHub()),
+        GetPage(name: '/chatgpt', page: () => FreeAIToolsPage()),
+        GetPage(name: '/lessons', page: () => LessonScreen()),
+        GetPage(name: '/notes', page: () => NoteListScreen()),
+      ],
     );
   }
 }

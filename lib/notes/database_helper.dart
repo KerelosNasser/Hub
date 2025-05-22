@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-
 import 'note_model.dart';
 
 class DatabaseHelper {
@@ -45,7 +44,8 @@ class DatabaseHelper {
 
   Future<List<Note>> getNotes() async {
     Database db = await database;
-    List<Map<String, dynamic>> maps = await db.query('notes', orderBy: 'updatedAt DESC');
+    List<Map<String, dynamic>> maps =
+        await db.query('notes', orderBy: 'updatedAt DESC');
     return List.generate(maps.length, (i) => Note.fromMap(maps[i]));
   }
 

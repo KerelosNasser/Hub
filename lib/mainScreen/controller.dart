@@ -125,4 +125,10 @@ class FarahhubController extends GetxController with GetTickerProviderStateMixin
       overlayEntry.remove();
     });
   }
+
+  void replayOnboarding() {
+    final box = GetStorage();
+    box.write('hasCompletedOnboarding', false);
+    Get.offAllNamed('/onboarding');
+  }
 }
