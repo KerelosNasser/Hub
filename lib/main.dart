@@ -25,7 +25,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
-  await Hive.openBox('tasksBox');
+  await Hive.openBox('tasks');
 
   final box = GetStorage();
 
