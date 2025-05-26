@@ -1,9 +1,9 @@
 import 'package:get/get.dart';
-import 'database_helper.dart';
+import 'package:farahs_hub/core/services/database_service.dart';
 import 'note_model.dart';
 
 class NoteController extends GetxController {
-  final DatabaseHelper _db = DatabaseHelper.instance;
+  final DatabaseService _db = Get.find<DatabaseService>();
   final RxList<Note> notes = <Note>[].obs;
   final RxBool isLoading = false.obs;
 
@@ -15,7 +15,7 @@ class NoteController extends GetxController {
 
   Future<void> loadNotes() async {
     isLoading.value = true;
-    notes.value = await _db.getNotes();
+    notes.value = await _db.getAllNotes();
     isLoading.value = false;
   }
 

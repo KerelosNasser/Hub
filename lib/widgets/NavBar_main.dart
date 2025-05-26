@@ -6,11 +6,8 @@ class BottomNavyNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
 
-  const BottomNavyNavBar({
-    super.key,
-    required this.currentIndex,
-    required this.onTap
-  });
+  const BottomNavyNavBar(
+      {super.key, required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -47,14 +44,14 @@ class BottomNavyNavBar extends StatelessWidget {
             inactiveColor: Colors.white70,
           ),
           BottomNavyBarItem(
-            icon: FaIcon(FontAwesomeIcons.tasks),
-            title: Text('Tasks'),
+            icon: Icon(FontAwesomeIcons.bookBookmark),
+            title: Text('Lessons'),
             activeColor: Color(0xffedf3ff),
             inactiveColor: Colors.white70,
           ),
           BottomNavyBarItem(
-            icon: Icon(FontAwesomeIcons.bookBookmark),
-            title: Text('Lessons'),
+            icon: Icon(FontAwesomeIcons.heartPulse),
+            title: Text('Health'),
             activeColor: Color(0xffedf3ff),
             inactiveColor: Colors.white70,
           ),

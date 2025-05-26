@@ -93,13 +93,19 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     }
 
     final picture = recorder.endRecording();
+    // Consider making the image size dynamic based on the canvas size or screen size
     final img = await picture.toImage(300, 300);
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final buffer = byteData!.buffer.asUint8List();
 
-    final tempDir = await getTemporaryDirectory();
+    // Save to application documents directory for persistence
+    final appDocDir = await getApplicationDocumentsDirectory();
+    final drawingsDir = Directory('${appDocDir.path}/drawings');
+    if (!await drawingsDir.exists()) {
+      await drawingsDir.create(recursive: true);
+    }
     final file = File(
-        '${tempDir.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png');
+        '${drawingsDir.path}/drawing_${DateTime.now().millisecondsSinceEpoch}.png');
     await file.writeAsBytes(buffer);
 
     setState(() => _drawingPath = file.path);

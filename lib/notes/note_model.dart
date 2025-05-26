@@ -15,8 +15,12 @@ class Note {
     this.drawingPath,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) {
+    // Consider if validation should be here or before saving
+    // validate();
+  }
 
+  // Corrected toMap method as an instance method
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -29,6 +33,7 @@ class Note {
     };
   }
 
+  // Corrected fromMap method as a factory constructor
   factory Note.fromMap(Map<String, dynamic> map) {
     return Note(
       id: map['id'],
@@ -40,4 +45,9 @@ class Note {
       updatedAt: DateTime.parse(map['updatedAt']),
     );
   }
+}
+
+class ValidationException implements Exception {
+  final String message;
+  ValidationException(this.message);
 }

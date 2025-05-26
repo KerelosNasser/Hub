@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:farahs_hub/core/services/notification_service.dart';
 
 import 'lesson-repo.dart';
 import 'lessons_model.dart';
@@ -8,6 +9,7 @@ import 'lessons_model.dart';
 class LessonController extends GetxController {
   final LessonRepository _repository = LessonRepository();
   final GetStorage _storage = GetStorage();
+  final NotificationService _notificationService = Get.find<NotificationService>();
 
   RxList<LessonModel> dailyLessons = <LessonModel>[].obs;
   RxBool isLessonAvailable = false.obs;
@@ -56,26 +58,17 @@ class LessonController extends GetxController {
   }
 
   void _scheduleDailyNotification() {
-    // Cancel previous scheduled notifications
-    AwesomeNotifications().cancelAllSchedules();
-
-    AwesomeNotifications().createNotification(
-      content: NotificationContent(
-        id: 10,
-        channelKey: 'daily_lessons',
-        title: 'New Daily Lessons! 📚',
-        body: "Don't forget to take at Least one lesson",
-        icon: 'resource://drawable/ic_notification',
-          criticalAlert: true,
-
-      ),
+    // Use the centralized notification service
+    _notificationService.scheduleNotification(
+      title: 'New Daily Lessons! 📚',
+      body: "Don't forget to take at Least one lesson",
+      channelKey: 'daily_lessons',
+      id: 10,
       schedule: NotificationCalendar(
         hour: 18,
         minute: 0,
         second: 0,
         repeats: true,
-        preciseAlarm: true,
-        allowWhileIdle: true
       ),
     );
   }
