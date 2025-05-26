@@ -1,8 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.farahs_hub">
-    
-    <!-- Health Connect Permissions -->
+
     <uses-permission android:name="android.permission.health.READ_STEPS"/>
     <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
@@ -11,40 +10,29 @@
     <uses-permission android:name="android.permission.health.READ_SLEEP"/>
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY"/>
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"/>
-    
-    <!-- Activity Recognition -->
+
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
-    
-    <!-- Notification and Alarm Permissions -->
+
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    
-    <!-- Network and Internet -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    
-    <!-- Service Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
-    
-    <!-- Media Permissions (Android 13+) -->
+
+
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
-    
-    <!-- Legacy Storage Permission (for older Android versions) -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
-        android:maxSdkVersion="32" 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
         tools:ignore="ScopedStorage"/>
-    
-    <!-- Package Query Permission -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
-
-    <application
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" /> <application
         android:label="farahs_hub"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
@@ -52,7 +40,6 @@
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">
 
-        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -66,37 +53,29 @@
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme"/>
-                
+
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
-        <!-- Health Connect Integration -->
         <meta-data
             android:name="health_permissions"
             android:resource="@array/health_permissions"/>
-            
-        <!-- Flutter Embedding -->
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2"/>
     </application>
-    
-    <!-- Health Connect Intent Filter -->
+
     <queries>
         <package android:name="com.google.android.apps.healthdata"/>
         <intent>
             <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
         </intent>
-    </queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.snapchat.android" />
+        </queries>
 
-    <!-- Required to query activities that can process text -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
-</manifest>
+    </manifest>
