@@ -6,5 +6,5 @@
         <item>android.permission.health.READ_EXERCISE</item>
         <item>android.permission.health.READ_DISTANCE</item>
         <item>android.permission.health.READ_SLEEP</item>
-    </string-array>
+        </string-array>
 </resources>

@@ -64,22 +64,26 @@ class HealthController extends GetxController {
   }
 
   Future<void> requestPermissions() async {
-    // Ensure isLoading is true at the start of a fresh permission request flow
     isLoading.value = true;
+    print("[HealthController] Attempting to request permissions..."); // Logging
     try {
       if (Platform.isAndroid) {
         var activityStatus = await Permission.activityRecognition.status;
+        print(
+            "[HealthController] Activity Recognition status: $activityStatus"); // Logging
         if (activityStatus.isDenied) {
           activityStatus = await Permission.activityRecognition.request();
+          print(
+              "[HealthController] Activity Recognition status after request: $activityStatus"); // Logging
         }
         if (activityStatus.isPermanentlyDenied ||
             activityStatus.isRestricted ||
             activityStatus.isDenied) {
           errorMessage.value =
               'Activity recognition permission is required for step counting. Please enable it in app settings.';
+          print(
+              "[HealthController] Activity Recognition permission not granted. Error: ${errorMessage.value}"); // Logging
           isLoading.value = false;
-          // Optionally, guide user to app settings:
-          // openAppSettings();
           return;
         }
       }
@@ -90,21 +94,31 @@ class HealthController extends GetxController {
         HealthDataType.ACTIVE_ENERGY_BURNED,
         HealthDataType.DISTANCE_DELTA,
         HealthDataType.WORKOUT,
-        // Consider adding more types if needed by your app, e.g., SLEEP_SESSION
       ];
+      print(
+          "[HealthController] Requesting Health Connect types: $types"); // Logging
 
       final permissions = types.map((type) => HealthDataAccess.READ).toList();
 
-      // This is the crucial call that should trigger Health Connect's UI
-      hasPermissions.value = await health.requestAuthorization(
+      // This is the crucial call
+      bool? authResult = await health.requestAuthorization(
         types,
         permissions: permissions,
       );
+      print(
+          "[HealthController] health.requestAuthorization result: $authResult"); // CRITICAL LOGGING
+
+      hasPermissions.value =
+          authResult ?? false; // Handle null case, though it should be bool
 
       if (hasPermissions.value) {
+        print(
+            "[HealthController] Permissions GRANTED by requestAuthorization."); // Logging
         errorMessage.value = '';
-        await fetchHealthData(); // This will set isLoading to false upon completion
+        await fetchHealthData();
       } else {
+        print(
+            "[HealthController] Permissions DENIED by requestAuthorization (or authResult was null)."); // Logging
         isLoading.value = false;
         errorMessage.value =
             'Health permissions are required. Please grant permissions in the Health Connect app.';
@@ -112,7 +126,7 @@ class HealthController extends GetxController {
           'Health Connect Permissions',
           'Open Health Connect app and grant permissions to Farah\'s Hub to view your health data.',
           snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 7), // Increased duration
+          duration: const Duration(seconds: 7),
           mainButton: TextButton(
             onPressed: _openHealthConnect,
             child: const Text('Open Health Connect',
@@ -124,6 +138,8 @@ class HealthController extends GetxController {
       isLoading.value = false;
       errorMessage.value =
           'Failed to request health permissions: ${e.toString()}';
+      print(
+          "[HealthController] Exception during requestPermissions: $e"); // Logging
       Get.snackbar(
         'Permission Error',
         'Error requesting health permissions. Ensure Health Connect is installed, updated, and permissions are granted within it.',
