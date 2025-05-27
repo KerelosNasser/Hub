@@ -19,9 +19,8 @@ class HealthPage extends StatelessWidget {
     final Color buttonBackgroundColor = const Color(0xffedf3ff);
 
     final screenWidth = MediaQuery.of(context).size.width;
-    int gridCrossAxisCount = screenWidth < 600
-        ? 2
-        : (screenWidth < 900 ? 3 : 4); // Adjusted for 4 items
+    int gridCrossAxisCount =
+        screenWidth < 600 ? 2 : (screenWidth < 900 ? 3 : 4);
     double horizontalPadding = screenWidth < 600 ? 12.0 : 16.0;
     double titleFontSize = screenWidth < 600 ? 22 : 24;
     double subtitleFontSize = screenWidth < 600 ? 14 : 16;
@@ -45,14 +44,12 @@ class HealthPage extends StatelessWidget {
                   Icon(Icons.health_and_safety_outlined,
                       size: screenWidth * 0.15, color: secondaryTextColor),
                   SizedBox(height: screenWidth * 0.04),
-                  Text(
-                    'Health Connect Integration',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: titleFontSize * 0.9,
-                        fontWeight: FontWeight.bold,
-                        color: primaryTextColor),
-                  ),
+                  Text('Health Connect Integration',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: titleFontSize * 0.9,
+                          fontWeight: FontWeight.bold,
+                          color: primaryTextColor)),
                   SizedBox(height: screenWidth * 0.02),
                   Text(
                     controller.errorMessage.value.isNotEmpty
@@ -60,11 +57,10 @@ class HealthPage extends StatelessWidget {
                         : 'Connect with Health Connect to view your health data on Farah\'s Hub.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: subtitleFontSize * 0.9,
-                      color: controller.errorMessage.value.isNotEmpty
-                          ? errorTextColor
-                          : secondaryTextColor,
-                    ),
+                        fontSize: subtitleFontSize * 0.9,
+                        color: controller.errorMessage.value.isNotEmpty
+                            ? errorTextColor
+                            : secondaryTextColor),
                   ),
                   SizedBox(height: screenWidth * 0.06),
                   ElevatedButton.icon(
@@ -77,32 +73,25 @@ class HealthPage extends StatelessWidget {
                             color: buttonTextColor)),
                     onPressed: controller.requestPermissions,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonBackgroundColor,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.05,
-                          vertical: screenWidth * 0.03),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
+                        backgroundColor: buttonBackgroundColor,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.05,
+                            vertical: screenWidth * 0.03),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
                   ),
                   SizedBox(height: screenWidth * 0.03),
                   TextButton(
-                    onPressed: () {
-                      Get.snackbar(
-                        'What is Health Connect?',
+                    onPressed: () => Get.snackbar('What is Health Connect?',
                         'Health Connect is Google\'s platform for health and fitness data. Install it from the Google Play Store to sync your health data with Farah\'s Hub.',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: Colors.pink.shade900,
                         colorText: primaryTextColor,
-                        duration: const Duration(seconds: 7),
-                      );
-                    },
-                    child: Text(
-                      'Learn more about Health Connect',
-                      style: TextStyle(
-                          color: primaryTextColor.withOpacity(0.8),
-                          fontSize: subtitleFontSize * 0.85),
-                    ),
+                        duration: const Duration(seconds: 7)),
+                    child: Text('Learn more about Health Connect',
+                        style: TextStyle(
+                            color: primaryTextColor.withOpacity(0.8),
+                            fontSize: subtitleFontSize * 0.85)),
                   ),
                 ],
               ),
@@ -130,17 +119,18 @@ class HealthPage extends StatelessWidget {
                 .toStringAsFixed(0)
             : '0';
 
-        // Calculate total sleep for the last available session or sum over a period
-        // For simplicity, let's take the most recent sleep session's duration
-        // Or sum all sleep sessions for the period (e.g., last night)
-        double totalSleepMinutes = 0;
-        if (controller.sleepData.isNotEmpty) {
-          // Example: Sum of all sleep durations in the fetched period (pastWeek)
-          // totalSleepMinutes = controller.sleepData.map((e) => e.value).reduce((a, b) => a + b);
-          // Example: Last sleep session duration
-          totalSleepMinutes = controller.sleepData.last.value;
+        double totalSleepMinutesRaw = 0;
+        if (controller.sleepData.isNotEmpty &&
+            controller.sleepData.last.value >= 0) {
+          totalSleepMinutesRaw = controller.sleepData.last.value;
         }
-        final sleepHours = (totalSleepMinutes / 60).toStringAsFixed(1);
+        final String formattedSleepDuration =
+            HealthController.formatDurationFromMinutes(totalSleepMinutesRaw);
+
+        bool noDataAtAll = controller.stepData.isEmpty &&
+            controller.heartRateData.isEmpty &&
+            controller.caloriesData.isEmpty &&
+            controller.sleepData.isEmpty;
 
         return RefreshIndicator(
           onRefresh: controller.fetchHealthData,
@@ -155,60 +145,52 @@ class HealthPage extends StatelessWidget {
                 children: [
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: screenWidth * 0.03),
-                    child: Text(
-                      'Health Dashboard',
+                    child: Text('Health Dashboard',
+                        style: TextStyle(
+                            fontSize: titleFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: primaryTextColor)),
+                  ),
+                  Text('Summary of the last 7 days',
                       style: TextStyle(
-                          fontSize: titleFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: primaryTextColor),
-                    ),
-                  ),
-                  Text(
-                    'Summary of the last 7 days',
-                    style: TextStyle(
-                        fontSize: subtitleFontSize, color: secondaryTextColor),
-                  ),
+                          fontSize: subtitleFontSize,
+                          color: secondaryTextColor)),
                   SizedBox(height: screenWidth * 0.05),
                   GridView.count(
-                    crossAxisCount: gridCrossAxisCount, // Adjusted for 4 items
+                    crossAxisCount: gridCrossAxisCount,
                     crossAxisSpacing: horizontalPadding / 1.5,
                     mainAxisSpacing: horizontalPadding / 1.5,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
                       HealthMetricCard(
-                        title: 'Steps',
-                        value: totalSteps,
-                        unit: 'steps',
-                        icon: FontAwesomeIcons.personWalking,
-                        iconColor: Colors.blue.shade300,
-                        onTap: () {},
-                      ),
+                          title: 'Steps',
+                          value: totalSteps,
+                          unit: 'steps',
+                          icon: FontAwesomeIcons.personWalking,
+                          iconColor: Colors.blue.shade300,
+                          onTap: () {}),
                       HealthMetricCard(
-                        title: 'Heart Rate',
-                        value: avgHeartRate,
-                        unit: 'bpm',
-                        icon: FontAwesomeIcons.heartPulse,
-                        iconColor: Colors.red.shade300,
-                        onTap: () {},
-                      ),
+                          title: 'Heart Rate',
+                          value: avgHeartRate,
+                          unit: 'bpm',
+                          icon: FontAwesomeIcons.heartPulse,
+                          iconColor: Colors.red.shade300,
+                          onTap: () {}),
                       HealthMetricCard(
-                        title: 'Calories',
-                        value: totalCalories,
-                        unit: 'kcal',
-                        icon: FontAwesomeIcons.fire,
-                        iconColor: Colors.orange.shade300,
-                        onTap: () {},
-                      ),
+                          title: 'Calories',
+                          value: totalCalories,
+                          unit: 'kcal',
+                          icon: FontAwesomeIcons.fire,
+                          iconColor: Colors.orange.shade300,
+                          onTap: () {}),
                       HealthMetricCard(
-                        // New Sleep Card
-                        title: 'Sleep',
-                        value: sleepHours,
-                        unit: 'hr',
-                        icon: FontAwesomeIcons.solidMoon,
-                        iconColor: Colors.purple.shade300,
-                        onTap: () {},
-                      ),
+                          title: 'Sleep',
+                          value: formattedSleepDuration,
+                          unit: '',
+                          icon: FontAwesomeIcons.solidMoon,
+                          iconColor: Colors.purple.shade300,
+                          onTap: () {}),
                     ],
                   ),
                   SizedBox(height: screenWidth * 0.06),
@@ -217,30 +199,58 @@ class HealthPage extends StatelessWidget {
                         data: controller.stepData,
                         title: 'Steps Trend',
                         chartColor: Colors.blue.shade300),
-                  SizedBox(height: screenWidth * 0.04),
+                  if (controller.stepData.isNotEmpty)
+                    SizedBox(height: screenWidth * 0.04),
                   if (controller.heartRateData.isNotEmpty)
                     HealthChart(
                         data: controller.heartRateData,
                         title: 'Heart Rate Trend',
                         chartColor: Colors.red.shade300),
-                  SizedBox(height: screenWidth * 0.04),
+                  if (controller.heartRateData.isNotEmpty)
+                    SizedBox(height: screenWidth * 0.04),
                   if (controller.caloriesData.isNotEmpty)
                     HealthChart(
                         data: controller.caloriesData,
                         title: 'Calories Burned Trend',
                         chartColor: Colors.orange.shade300),
-                  SizedBox(height: screenWidth * 0.04),
-                  if (controller.sleepData.isNotEmpty) // New Sleep Chart
+                  if (controller.caloriesData.isNotEmpty)
+                    SizedBox(height: screenWidth * 0.04),
+                  if (controller.sleepFetchErrorMessage.value.isNotEmpty)
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(vertical: screenWidth * 0.02),
+                      child: Center(
+                          child: Text(
+                              'Sleep Data: ${controller.sleepFetchErrorMessage.value}',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: errorTextColor,
+                                  fontSize: subtitleFontSize * 0.95))),
+                    ),
+                  if (controller.sleepData.isNotEmpty)
                     HealthChart(
                         data: controller.sleepData,
                         title: 'Sleep Duration Trend',
                         chartColor: Colors.purple.shade300,
-                        yAxisUnitOverride: 'min'),
-                  if (controller.stepData.isEmpty &&
-                      controller.heartRateData.isEmpty &&
-                      controller.caloriesData.isEmpty &&
-                      controller.sleepData.isEmpty &&
-                      controller.hasPermissions.value)
+                        yAxisUnitOverride: 'min')
+                  else if (controller.hasPermissions.value &&
+                      controller.sleepFetchErrorMessage.value.isEmpty &&
+                      !noDataAtAll)
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(vertical: screenWidth * 0.04),
+                      child: Center(
+                          child: Text(
+                              'No sleep data found for the last 7 days.\nEnsure sleep is tracked and synced to Health Connect.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: secondaryTextColor,
+                                  fontSize: subtitleFontSize * 0.9))),
+                    ),
+                  if (controller.sleepData.isNotEmpty ||
+                      controller.sleepFetchErrorMessage.value.isNotEmpty)
+                    SizedBox(height: screenWidth * 0.04),
+                  if (noDataAtAll && controller.hasPermissions.value)
                     Padding(
                       padding:
                           EdgeInsets.symmetric(vertical: screenWidth * 0.1),
@@ -252,20 +262,24 @@ class HealthPage extends StatelessWidget {
                                 color: secondaryTextColor),
                             SizedBox(height: screenWidth * 0.03),
                             Text(
-                              'No health data found for the last 7 days.',
+                              controller.errorMessage.value.isNotEmpty
+                                  ? controller.errorMessage.value
+                                  : 'No health data found for the last 7 days.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  color: secondaryTextColor,
+                                  color:
+                                      controller.errorMessage.value.isNotEmpty
+                                          ? errorTextColor
+                                          : secondaryTextColor,
                                   fontSize: subtitleFontSize),
                             ),
                             SizedBox(height: screenWidth * 0.02),
                             Text(
-                              'Ensure your health tracking apps (like Google Fit) are syncing with Health Connect.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: secondaryTextColor.withOpacity(0.8),
-                                  fontSize: subtitleFontSize * 0.85),
-                            ),
+                                'Ensure your health tracking apps are syncing with Health Connect and permissions are granted within Health Connect for Farah\'s Hub.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    color: secondaryTextColor.withOpacity(0.8),
+                                    fontSize: subtitleFontSize * 0.85)),
                           ],
                         ),
                       ),

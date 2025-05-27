@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'health_model.dart';
 import 'dart:io';
 import 'package:external_app_launcher/external_app_launcher.dart';
+// For pow and log
 
 class HealthController extends GetxController {
   final Health health = Health();
@@ -14,14 +15,32 @@ class HealthController extends GetxController {
   final RxList<HealthMetric> stepData = <HealthMetric>[].obs;
   final RxList<HealthMetric> heartRateData = <HealthMetric>[].obs;
   final RxList<HealthMetric> caloriesData = <HealthMetric>[].obs;
-  final RxList<HealthMetric> sleepData =
-      <HealthMetric>[].obs; // New list for sleep
+  final RxList<HealthMetric> sleepData = <HealthMetric>[].obs;
   final RxString errorMessage = ''.obs;
+  final RxString sleepFetchErrorMessage = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     _initializeHealthService();
+  }
+
+  static String formatDurationFromMinutes(double totalMinutes) {
+    if (totalMinutes < 0) return 'N/A';
+    if (totalMinutes == 0) return '0m';
+
+    final int intTotalMinutes = totalMinutes.round();
+    final int hours = intTotalMinutes ~/ 60;
+    final int minutes = intTotalMinutes % 60;
+
+    List<String> parts = [];
+    if (hours > 0) {
+      parts.add('${hours}h');
+    }
+    if (minutes > 0 || hours == 0) {
+      parts.add('${minutes}m');
+    }
+    return parts.join(' ');
   }
 
   Future<void> _initializeHealthService() async {
@@ -43,11 +62,9 @@ class HealthController extends GetxController {
                 try {
                   await health.installHealthConnect();
                 } catch (e) {
-                  Get.snackbar(
-                    'Error',
-                    'Could not open Play Store. Please install Health Connect manually.',
-                    snackPosition: SnackPosition.BOTTOM,
-                  );
+                  Get.snackbar('Error',
+                      'Could not open Play Store. Please install Health Connect manually.',
+                      snackPosition: SnackPosition.BOTTOM);
                 }
               },
               child: const Text('Install Health Connect',
@@ -87,22 +104,18 @@ class HealthController extends GetxController {
         HealthDataType.STEPS,
         HealthDataType.HEART_RATE,
         HealthDataType.ACTIVE_ENERGY_BURNED,
-        HealthDataType.DISTANCE_DELTA,
-        HealthDataType.WORKOUT,
-        HealthDataType.SLEEP_SESSION, // Add sleep session
+        HealthDataType.SLEEP_SESSION,
       ];
 
       final permissions = types.map((type) => HealthDataAccess.READ).toList();
-
-      bool? authResult = await health.requestAuthorization(
-        types,
-        permissions: permissions,
-      );
+      bool? authResult =
+          await health.requestAuthorization(types, permissions: permissions);
 
       hasPermissions.value = authResult ?? false;
 
       if (hasPermissions.value) {
         errorMessage.value = '';
+        sleepFetchErrorMessage.value = '';
         await fetchHealthData();
       } else {
         isLoading.value = false;
@@ -138,42 +151,31 @@ class HealthController extends GetxController {
       const String healthConnectPackageName =
           "com.google.android.apps.healthdata";
       bool isInstalled = await LaunchApp.isAppInstalled(
-        androidPackageName: healthConnectPackageName,
-        iosUrlScheme: '',
-      );
-
+          androidPackageName: healthConnectPackageName, iosUrlScheme: '');
       if (isInstalled) {
         await LaunchApp.openApp(androidPackageName: healthConnectPackageName);
       } else {
-        Get.snackbar(
-          'Health Connect Not Installed',
-          'Please install Health Connect from the Google Play Store.',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 7),
-          mainButton: TextButton(
-            onPressed: () async {
-              try {
-                await health.installHealthConnect();
-              } catch (e) {
-                Get.snackbar(
-                  'Error',
-                  'Could not open Play Store. Please install Health Connect manually.',
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-              }
-            },
-            child: const Text('Install Health Connect',
-                style: TextStyle(color: Colors.white)),
-          ),
-        );
+        Get.snackbar('Health Connect Not Installed',
+            'Please install Health Connect from the Google Play Store.',
+            snackPosition: SnackPosition.BOTTOM,
+            duration: const Duration(seconds: 7),
+            mainButton: TextButton(
+                onPressed: () async {
+                  try {
+                    await health.installHealthConnect();
+                  } catch (e) {
+                    Get.snackbar('Error', 'Could not open Play Store.',
+                        snackPosition: SnackPosition.BOTTOM);
+                  }
+                },
+                child: const Text('Install',
+                    style: TextStyle(color: Colors.white))));
       }
     } catch (e) {
-      Get.snackbar(
-        'Open Health Connect Manually',
-        'Could not open Health Connect automatically. Please open it from your app drawer to manage permissions.',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 7),
-      );
+      Get.snackbar('Open Health Connect Manually',
+          'Could not open Health Connect automatically. Please open it from your app drawer.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 7));
     }
   }
 
@@ -183,49 +185,51 @@ class HealthController extends GetxController {
       isLoading.value = false;
       return;
     }
-
     isLoading.value = true;
     errorMessage.value = '';
+    sleepFetchErrorMessage.value = '';
+
     try {
       final now = DateTime.now();
       final pastWeek = now.subtract(const Duration(days: 7));
-
       stepData.clear();
       heartRateData.clear();
       caloriesData.clear();
-      sleepData.clear(); // Clear sleep data
+      sleepData.clear();
 
       await Future.wait([
         _fetchStepsDataInternal(pastWeek, now),
         _fetchHeartRateDataInternal(pastWeek, now),
         _fetchCaloriesDataInternal(pastWeek, now),
-        _fetchSleepDataInternal(pastWeek, now), // Fetch sleep data
+        _fetchSleepDataInternal(pastWeek, now),
       ]);
 
       if (stepData.isEmpty &&
           heartRateData.isEmpty &&
           caloriesData.isEmpty &&
-          sleepData.isEmpty) {
+          sleepData.isEmpty &&
+          sleepFetchErrorMessage.value.isEmpty) {
         errorMessage.value =
-            'No health data found for the past 7 days in Health Connect.';
-      } else {
-        Get.snackbar(
-          'Success',
-          'Health data updated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+            'No health data found for the past 7 days in Health Connect. Ensure data is being recorded and synced.';
+      } else if (stepData.isNotEmpty ||
+          heartRateData.isNotEmpty ||
+          caloriesData.isNotEmpty ||
+          sleepData.isNotEmpty) {
+        if (sleepData.isNotEmpty ||
+            (sleepData.isEmpty && sleepFetchErrorMessage.value.isEmpty)) {
+          Get.snackbar('Success', 'Health data updated successfully',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 3),
+              backgroundColor: Colors.green,
+              colorText: Colors.white);
+        }
       }
     } catch (e) {
       errorMessage.value = 'Failed to fetch health data: ${e.toString()}';
-      Get.snackbar(
-        'Data Fetch Error',
-        'Could not retrieve health data. Please check permissions in Health Connect.',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 5),
-      );
+      Get.snackbar('Data Fetch Error',
+          'Could not retrieve health data. Please check permissions in Health Connect.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 5));
     } finally {
       isLoading.value = false;
     }
@@ -234,101 +238,110 @@ class HealthController extends GetxController {
   Future<void> _fetchStepsDataInternal(
       DateTime startDate, DateTime endDate) async {
     try {
-      final steps = await health.getHealthDataFromTypes(
-        startTime: startDate,
-        endTime: endDate,
-        types: [HealthDataType.STEPS],
-      );
-      stepData.assignAll(steps
+      final stepsList = await health.getHealthDataFromTypes(
+          startTime: startDate,
+          endTime: endDate,
+          types: [HealthDataType.STEPS]);
+      stepData.assignAll(stepsList
+          .where((s) =>
+              (s.value as NumericHealthValue).numericValue.toDouble() > 0)
           .map((step) => HealthMetric(
                 name: 'Steps',
-                value: double.tryParse(step.value.toString()) ?? 0.0,
+                value:
+                    (step.value as NumericHealthValue).numericValue.toDouble(),
                 unit: 'steps',
                 timestamp: step.dateFrom,
               ))
           .toList());
     } catch (e) {
-      // Non-blocking
+      // Consider setting a specific error message for steps if needed
     }
   }
 
   Future<void> _fetchHeartRateDataInternal(
       DateTime startDate, DateTime endDate) async {
     try {
-      final heartRates = await health.getHealthDataFromTypes(
-        startTime: startDate,
-        endTime: endDate,
-        types: [HealthDataType.HEART_RATE],
-      );
-      heartRateData.assignAll(heartRates
+      final hrList = await health.getHealthDataFromTypes(
+          startTime: startDate,
+          endTime: endDate,
+          types: [HealthDataType.HEART_RATE]);
+      heartRateData.assignAll(hrList
+          .where((hr) =>
+              (hr.value as NumericHealthValue).numericValue.toDouble() > 0)
           .map((hr) => HealthMetric(
                 name: 'Heart Rate',
-                value: double.tryParse(hr.value.toString()) ?? 0.0,
+                value: (hr.value as NumericHealthValue).numericValue.toDouble(),
                 unit: 'bpm',
                 timestamp: hr.dateFrom,
               ))
           .toList());
     } catch (e) {
-      // Non-blocking
+      // Consider setting a specific error message for heart rate if needed
     }
   }
 
   Future<void> _fetchCaloriesDataInternal(
       DateTime startDate, DateTime endDate) async {
     try {
-      final calories = await health.getHealthDataFromTypes(
-        startTime: startDate,
-        endTime: endDate,
-        types: [HealthDataType.ACTIVE_ENERGY_BURNED],
-      );
-      caloriesData.assignAll(calories
+      final calList = await health.getHealthDataFromTypes(
+          startTime: startDate,
+          endTime: endDate,
+          types: [HealthDataType.ACTIVE_ENERGY_BURNED]);
+      caloriesData.assignAll(calList
+          .where((cal) =>
+              (cal.value as NumericHealthValue).numericValue.toDouble() > 0)
           .map((cal) => HealthMetric(
                 name: 'Calories',
-                value: double.tryParse(cal.value.toString()) ?? 0.0,
+                value:
+                    (cal.value as NumericHealthValue).numericValue.toDouble(),
                 unit: 'kcal',
                 timestamp: cal.dateFrom,
               ))
           .toList());
     } catch (e) {
-      // Non-blocking
+      // Consider setting a specific error message for calories if needed
     }
   }
 
   Future<void> _fetchSleepDataInternal(
       DateTime startDate, DateTime endDate) async {
     try {
+      sleepFetchErrorMessage.value = '';
       final sleepSessions = await health.getHealthDataFromTypes(
-        startTime: startDate,
-        endTime: endDate,
-        types: [HealthDataType.SLEEP_SESSION],
-      );
+          startTime: startDate,
+          endTime: endDate,
+          types: [HealthDataType.SLEEP_SESSION]);
 
       final List<HealthMetric> processedSleepData = [];
-      for (var session in sleepSessions) {
-        // Health Connect typically returns SLEEP_SESSION with value as duration in milliseconds
-        // Or, it might be a categorical value if not configured to give duration directly.
-        // The `value` field for SLEEP_SESSION is often a `HealthDataPointValue` which might be a `NumericHealthValue` or similar.
-        // Let's assume value is duration in minutes for simplicity, or we calculate it.
-        // The actual structure of `session.value` for SLEEP_SESSION needs to be handled based on how Health Connect provides it.
-        // Often, SLEEP_SESSION provides start and end time, and you calculate duration.
+      if (sleepSessions.isNotEmpty) {
+        for (var session in sleepSessions) {
+          final startTime = session.dateFrom;
+          final endTime = session.dateTo;
+          if (!endTime.isAfter(startTime)) {
+            continue;
+          }
+          final durationInMinutes = endTime.difference(startTime).inMinutes;
 
-        final startTime = session.dateFrom;
-        final endTime = session.dateTo;
-        final durationInMinutes = endTime.difference(startTime).inMinutes;
-
-        if (durationInMinutes > 0) {
-          processedSleepData.add(HealthMetric(
-            name: 'Sleep',
-            value: durationInMinutes.toDouble(), // Store duration in minutes
-            unit: 'min',
-            timestamp:
-                startTime, // Use start time as the timestamp for the session
-          ));
+          if (durationInMinutes > 0) {
+            processedSleepData.add(HealthMetric(
+              name: 'Sleep',
+              value: durationInMinutes.toDouble(),
+              unit: 'min',
+              timestamp: startTime,
+            ));
+          }
         }
       }
       sleepData.assignAll(processedSleepData);
+
+      if (processedSleepData.isEmpty && sleepSessions.isNotEmpty) {
+        sleepFetchErrorMessage.value =
+            'Found ${sleepSessions.length} sleep sessions, but none had a valid (positive) duration. Please check your sleep data in Health Connect.';
+      }
     } catch (e) {
-      // Non-blocking
+      sleepFetchErrorMessage.value =
+          'Could not fetch or process sleep data. Error: ${e.toString()}';
+      sleepData.clear();
     }
   }
 }

@@ -50,17 +50,42 @@ class HealthChart extends StatelessWidget {
     final sortedData = List<HealthMetric>.from(data)
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-    String displayUnit = yAxisUnitOverride ?? sortedData.first.unit;
+    // Helper function to format sleep time
+    String formatSleepTime(double minutes) {
+      int hours = (minutes / 60).floor();
+      int remainingMinutes = (minutes % 60).round();
+
+      if (hours == 0) {
+        return '${remainingMinutes}min';
+      } else if (remainingMinutes == 0) {
+        return '${hours}h';
+      } else {
+        return '${hours}h ${remainingMinutes}min';
+      }
+    }
+
+    // Format the latest value based on data type
+    String latestValueText;
     double lastValue = sortedData.last.value;
-    int fractionDigits = (displayUnit == "steps" ||
-            displayUnit == "kcal" ||
-            displayUnit == "min")
-        ? 0
-        : 1;
-    if (displayUnit == "hr" && yAxisUnitOverride == "hr") {
-      // If displaying sleep in hours
-      lastValue = lastValue / 60; // Convert minutes to hours for display
-      fractionDigits = 1;
+    String originalUnit = sortedData.first.unit;
+
+    if (_isSleepData() && originalUnit == 'min') {
+      latestValueText = 'Latest: ${formatSleepTime(lastValue)}';
+    } else {
+      String displayUnit = yAxisUnitOverride ?? originalUnit;
+      int fractionDigits = (displayUnit == "steps" ||
+              displayUnit == "kcal" ||
+              displayUnit == "min")
+          ? 0
+          : 1;
+
+      if (displayUnit == "hr" && yAxisUnitOverride == "hr") {
+        lastValue = lastValue / 60; // Convert minutes to hours for display
+        fractionDigits = 1;
+      }
+
+      latestValueText =
+          'Latest: ${lastValue.toStringAsFixed(fractionDigits)} ${yAxisUnitOverride ?? sortedData.last.unit}';
     }
 
     return Card(
@@ -81,8 +106,7 @@ class HealthChart extends StatelessWidget {
             ),
             SizedBox(height: screenWidth * 0.015),
             Text(
-              // For sleep, if original data is in minutes, convert to hours for "Latest" display if needed
-              'Latest: ${lastValue.toStringAsFixed(fractionDigits)} ${yAxisUnitOverride ?? sortedData.last.unit}',
+              latestValueText,
               style:
                   TextStyle(fontSize: latestValueFontSize, color: chartColor),
             ),
@@ -114,7 +138,7 @@ class HealthChart extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: screenWidth *
-                            0.12, // Increased for potentially larger numbers
+                            0.15, // Increased for sleep time labels
                         getTitlesWidget: (value, meta) {
                           if (meta.max % 5 != 0 &&
                               value % (meta.appliedInterval / 2) != 0 &&
@@ -125,11 +149,28 @@ class HealthChart extends StatelessWidget {
                               return Container();
                             }
                           }
-                          String label = value.toInt().toString();
-                          if (yAxisUnitOverride == 'hr' &&
+
+                          String label;
+                          if (_isSleepData() &&
+                              sortedData.first.unit == 'min') {
+                            // For sleep data in minutes, format as h min
+                            double minutes = value;
+                            int hours = (minutes / 60).floor();
+                            int remainingMins = (minutes % 60).round();
+
+                            if (hours == 0) {
+                              label = '${remainingMins}m';
+                            } else if (remainingMins == 0) {
+                              label = '${hours}h';
+                            } else {
+                              label = '${hours}h${remainingMins}m';
+                            }
+                          } else if (yAxisUnitOverride == 'hr' &&
                               title.toLowerCase().contains('sleep')) {
                             // If chart itself is meant to show hours, but data is in minutes
-                            // label = (value / 60).toStringAsFixed(1); // This assumes Y-axis values are already scaled to hours
+                            label = (value / 60).toStringAsFixed(1);
+                          } else {
+                            label = value.toInt().toString();
                           }
 
                           return Text(
@@ -212,39 +253,38 @@ class HealthChart extends StatelessWidget {
     );
   }
 
+  bool _isSleepData() {
+    return title.toLowerCase().contains('sleep');
+  }
+
   List<FlSpot> _createSpots(
       List<HealthMetric> sortedData, String? yAxisUnitOverride) {
     return sortedData.asMap().entries.map((entry) {
       double value = entry.value.value;
-      // if(yAxisUnitOverride == 'hr' && entry.value.unit == 'min' && title.toLowerCase().contains('sleep')){
-      //    value = value / 60; // Convert to hours for plotting if chart Y-axis is hours
-      // }
+      if (yAxisUnitOverride == 'hr' &&
+          entry.value.unit == 'min' &&
+          _isSleepData()) {
+        value = value /
+            60; // Convert to hours for plotting if chart Y-axis is hours
+      }
       return FlSpot(entry.key.toDouble(), value);
     }).toList();
   }
 
   double _calculateMinY(List<HealthMetric> data, String? yAxisUnitOverride) {
     if (data.isEmpty) return 0;
-    double minVal = data.map((e) {
-      // double val = e.value;
-      // if(yAxisUnitOverride == 'hr' && e.unit == 'min' && title.toLowerCase().contains('sleep')){
-      //    val = val / 60;
-      // }
-      // return val;
-      return e.value;
-    }).reduce((a, b) => a < b ? a : b);
+    double minVal = data.map((e) => e.value).reduce((a, b) => a < b ? a : b);
     return (minVal * 0.85).floorToDouble();
   }
 
   double _calculateMaxY(List<HealthMetric> data, String? yAxisUnitOverride) {
     if (data.isEmpty) return 100;
     double maxVal = data.map((e) {
-      // double val = e.value;
-      // if(yAxisUnitOverride == 'hr' && e.unit == 'min' && title.toLowerCase().contains('sleep')){
-      //    val = val / 60;
-      // }
-      // return val;
-      return e.value;
+      double val = e.value;
+      if (yAxisUnitOverride == 'hr' && e.unit == 'min' && _isSleepData()) {
+        val = val / 60;
+      }
+      return val;
     }).reduce((a, b) => a > b ? a : b);
     return (maxVal * 1.15).ceilToDouble();
   }
