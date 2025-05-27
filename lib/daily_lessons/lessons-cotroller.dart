@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -9,7 +10,7 @@ import 'lessons_model.dart';
 class LessonController extends GetxController {
   final LessonRepository _repository = LessonRepository();
   final GetStorage _storage = GetStorage();
-  final NotificationService _notificationService = Get.find<NotificationService>();
+  late final NotificationService _notificationService;
 
   RxList<LessonModel> dailyLessons = <LessonModel>[].obs;
   RxBool isLessonAvailable = false.obs;
@@ -17,9 +18,11 @@ class LessonController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize notification permissions
+    _notificationService = Get.find<NotificationService>();
     _requestNotificationPermissions();
-    loadOrRefreshLessons();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadOrRefreshLessons();
+    });
   }
 
   void _requestNotificationPermissions() {
@@ -38,27 +41,28 @@ class LessonController extends GetxController {
   }
 
   void loadOrRefreshLessons() {
-    // Check if lessons need refresh
-    DateTime? lastLessonDate = _storage.read('last_lesson_date');
+    String? lastLessonDateString = _storage.read('last_lesson_date');
+    DateTime? lastLessonDate;
+    if (lastLessonDateString != null) {
+      lastLessonDate = DateTime.tryParse(lastLessonDateString);
+    }
 
-    if (lastLessonDate == null ||
-        !_isSameDay(lastLessonDate, DateTime.now())) {
-      // Generate new daily lessons
+    if (lastLessonDate == null || !_isSameDay(lastLessonDate, DateTime.now())) {
       dailyLessons.value = _repository.getDailyLessons();
-
-      // Save current date
-      _storage.write('last_lesson_date', DateTime.now());
-
-      // Update lesson availability
+      _storage.write('last_lesson_date', DateTime.now().toIso8601String());
       isLessonAvailable.value = true;
-
-      // Schedule daily notification
       _scheduleDailyNotification();
+    } else {
+      if (dailyLessons.isEmpty && _isSameDay(lastLessonDate, DateTime.now())) {
+        dailyLessons.value = _repository.getDailyLessons();
+        isLessonAvailable.value = true;
+      } else if (dailyLessons.isNotEmpty) {
+        isLessonAvailable.value = true;
+      }
     }
   }
 
   void _scheduleDailyNotification() {
-    // Use the centralized notification service
     _notificationService.scheduleNotification(
       title: 'New Daily Lessons! 📚',
       body: "Don't forget to take at Least one lesson",
@@ -74,9 +78,6 @@ class LessonController extends GetxController {
   }
 
   bool _isSameDay(DateTime d1, DateTime d2) {
-    return d1.year == d2.year &&
-        d1.month == d2.month &&
-        d1.day == d2.day;
+    return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
   }
 }
-

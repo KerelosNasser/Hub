@@ -1,10 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:health/health.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'health_model.dart';
 import 'dart:io';
 import 'package:external_app_launcher/external_app_launcher.dart';
-import 'package:flutter/material.dart';
 
 class HealthController extends GetxController {
   final Health health = Health();
@@ -14,6 +14,8 @@ class HealthController extends GetxController {
   final RxList<HealthMetric> stepData = <HealthMetric>[].obs;
   final RxList<HealthMetric> heartRateData = <HealthMetric>[].obs;
   final RxList<HealthMetric> caloriesData = <HealthMetric>[].obs;
+  final RxList<HealthMetric> sleepData =
+      <HealthMetric>[].obs; // New list for sleep
   final RxString errorMessage = ''.obs;
 
   @override
@@ -65,24 +67,17 @@ class HealthController extends GetxController {
 
   Future<void> requestPermissions() async {
     isLoading.value = true;
-    print("[HealthController] Attempting to request permissions..."); // Logging
     try {
       if (Platform.isAndroid) {
         var activityStatus = await Permission.activityRecognition.status;
-        print(
-            "[HealthController] Activity Recognition status: $activityStatus"); // Logging
         if (activityStatus.isDenied) {
           activityStatus = await Permission.activityRecognition.request();
-          print(
-              "[HealthController] Activity Recognition status after request: $activityStatus"); // Logging
         }
         if (activityStatus.isPermanentlyDenied ||
             activityStatus.isRestricted ||
             activityStatus.isDenied) {
           errorMessage.value =
               'Activity recognition permission is required for step counting. Please enable it in app settings.';
-          print(
-              "[HealthController] Activity Recognition permission not granted. Error: ${errorMessage.value}"); // Logging
           isLoading.value = false;
           return;
         }
@@ -94,31 +89,22 @@ class HealthController extends GetxController {
         HealthDataType.ACTIVE_ENERGY_BURNED,
         HealthDataType.DISTANCE_DELTA,
         HealthDataType.WORKOUT,
+        HealthDataType.SLEEP_SESSION, // Add sleep session
       ];
-      print(
-          "[HealthController] Requesting Health Connect types: $types"); // Logging
 
       final permissions = types.map((type) => HealthDataAccess.READ).toList();
 
-      // This is the crucial call
       bool? authResult = await health.requestAuthorization(
         types,
         permissions: permissions,
       );
-      print(
-          "[HealthController] health.requestAuthorization result: $authResult"); // CRITICAL LOGGING
 
-      hasPermissions.value =
-          authResult ?? false; // Handle null case, though it should be bool
+      hasPermissions.value = authResult ?? false;
 
       if (hasPermissions.value) {
-        print(
-            "[HealthController] Permissions GRANTED by requestAuthorization."); // Logging
         errorMessage.value = '';
         await fetchHealthData();
       } else {
-        print(
-            "[HealthController] Permissions DENIED by requestAuthorization (or authResult was null)."); // Logging
         isLoading.value = false;
         errorMessage.value =
             'Health permissions are required. Please grant permissions in the Health Connect app.';
@@ -138,8 +124,6 @@ class HealthController extends GetxController {
       isLoading.value = false;
       errorMessage.value =
           'Failed to request health permissions: ${e.toString()}';
-      print(
-          "[HealthController] Exception during requestPermissions: $e"); // Logging
       Get.snackbar(
         'Permission Error',
         'Error requesting health permissions. Ensure Health Connect is installed, updated, and permissions are granted within it.',
@@ -155,7 +139,7 @@ class HealthController extends GetxController {
           "com.google.android.apps.healthdata";
       bool isInstalled = await LaunchApp.isAppInstalled(
         androidPackageName: healthConnectPackageName,
-        iosUrlScheme: '', // Not applicable for Health Connect on iOS
+        iosUrlScheme: '',
       );
 
       if (isInstalled) {
@@ -200,7 +184,7 @@ class HealthController extends GetxController {
       return;
     }
 
-    isLoading.value = true; // Set loading true before fetching
+    isLoading.value = true;
     errorMessage.value = '';
     try {
       final now = DateTime.now();
@@ -209,14 +193,19 @@ class HealthController extends GetxController {
       stepData.clear();
       heartRateData.clear();
       caloriesData.clear();
+      sleepData.clear(); // Clear sleep data
 
       await Future.wait([
         _fetchStepsDataInternal(pastWeek, now),
         _fetchHeartRateDataInternal(pastWeek, now),
         _fetchCaloriesDataInternal(pastWeek, now),
+        _fetchSleepDataInternal(pastWeek, now), // Fetch sleep data
       ]);
 
-      if (stepData.isEmpty && heartRateData.isEmpty && caloriesData.isEmpty) {
+      if (stepData.isEmpty &&
+          heartRateData.isEmpty &&
+          caloriesData.isEmpty &&
+          sleepData.isEmpty) {
         errorMessage.value =
             'No health data found for the past 7 days in Health Connect.';
       } else {
@@ -259,7 +248,7 @@ class HealthController extends GetxController {
               ))
           .toList());
     } catch (e) {
-      // Non-blocking, error for this specific data type will be part of the general "No data" or error message.
+      // Non-blocking
     }
   }
 
@@ -300,6 +289,44 @@ class HealthController extends GetxController {
                 timestamp: cal.dateFrom,
               ))
           .toList());
+    } catch (e) {
+      // Non-blocking
+    }
+  }
+
+  Future<void> _fetchSleepDataInternal(
+      DateTime startDate, DateTime endDate) async {
+    try {
+      final sleepSessions = await health.getHealthDataFromTypes(
+        startTime: startDate,
+        endTime: endDate,
+        types: [HealthDataType.SLEEP_SESSION],
+      );
+
+      final List<HealthMetric> processedSleepData = [];
+      for (var session in sleepSessions) {
+        // Health Connect typically returns SLEEP_SESSION with value as duration in milliseconds
+        // Or, it might be a categorical value if not configured to give duration directly.
+        // The `value` field for SLEEP_SESSION is often a `HealthDataPointValue` which might be a `NumericHealthValue` or similar.
+        // Let's assume value is duration in minutes for simplicity, or we calculate it.
+        // The actual structure of `session.value` for SLEEP_SESSION needs to be handled based on how Health Connect provides it.
+        // Often, SLEEP_SESSION provides start and end time, and you calculate duration.
+
+        final startTime = session.dateFrom;
+        final endTime = session.dateTo;
+        final durationInMinutes = endTime.difference(startTime).inMinutes;
+
+        if (durationInMinutes > 0) {
+          processedSleepData.add(HealthMetric(
+            name: 'Sleep',
+            value: durationInMinutes.toDouble(), // Store duration in minutes
+            unit: 'min',
+            timestamp:
+                startTime, // Use start time as the timestamp for the session
+          ));
+        }
+      }
+      sleepData.assignAll(processedSleepData);
     } catch (e) {
       // Non-blocking
     }

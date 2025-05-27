@@ -1,5 +1,6 @@
 import 'package:farahs_hub/core/bindings/app_binding.dart';
 import 'package:farahs_hub/core/routes/app_pages.dart';
+import 'package:farahs_hub/core/services/notification_service.dart';
 import 'package:farahs_hub/core/translations/app_translations.dart';
 import 'package:farahs_hub/health/health_page.dart';
 import 'package:flutter/material.dart';
@@ -17,55 +18,32 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'daily_lessons/lessons_model.dart';
 
 void main() async {
-  // Ensure proper initialization
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Initialize services with proper error handling
     await _initializeServices();
-
-    // Set preferred orientations
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-
     runApp(const MyApp());
-  } catch (e, stackTrace) {
-    // Log error and show fallback UI
-    debugPrint('App initialization failed: $e');
-    debugPrint('Stack trace: $stackTrace');
+  } catch (e) {
     runApp(const ErrorApp());
   }
 }
 
 Future<void> _initializeServices() async {
-  try {
-    // Initialize GetStorage with error handling
-    await GetStorage.init();
-    debugPrint('✓ GetStorage initialized successfully');
-  } catch (e) {
-    debugPrint('✗ GetStorage initialization failed: $e');
-    throw Exception('Failed to initialize GetStorage: $e');
+  await GetStorage.init();
+  await Hive.initFlutter();
+
+  if (!Hive.isAdapterRegistered(0)) {
+    // Assuming 0 is LessonModelAdapter typeId
+    Hive.registerAdapter(LessonModelAdapter());
   }
 
-  try {
-    // Initialize Hive with error handling
-    await Hive.initFlutter();
-    debugPrint('✓ Hive initialized successfully');
-
-    // Register adapters with validation
-    if (!Hive.isAdapterRegistered(0)) {
-      Hive.registerAdapter(LessonModelAdapter());
-      debugPrint('✓ LessonModelAdapter registered');
-    }
-    // Add other adapters as needed
-  } catch (e) {
-    debugPrint('✗ Hive initialization failed: $e');
-    throw Exception('Failed to initialize Hive: $e');
-  }
-
-  debugPrint('✓ All services initialized successfully');
+  final notificationService = NotificationService();
+  await notificationService.init();
+  Get.put(notificationService, permanent: true);
 }
 
 class MyApp extends StatelessWidget {
@@ -83,8 +61,6 @@ class MyApp extends StatelessWidget {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: "Farah's Hub",
-
-          // Theme configuration
           theme: ThemeData(
             primarySwatch: Colors.pink,
             fontFamily: 'Roboto',
@@ -94,14 +70,10 @@ class MyApp extends StatelessWidget {
             primaryColor: Colors.pink.shade800,
           ),
           themeMode: themeController.themeMode,
-
-          // Bindings and translations
           initialBinding: AppBinding(),
           translations: AppTranslations(),
           locale: _getLocale(),
           fallbackLocale: const Locale('en', 'US'),
-
-          // Localization
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -111,12 +83,8 @@ class MyApp extends StatelessWidget {
             Locale('en', 'US'),
             Locale('ar', 'SA'),
           ],
-
-          // Navigation
           getPages: AppPages.routes,
           initialRoute: hasCompletedOnboarding ? Routes.HUB : Routes.ONBOARDING,
-
-          // Error handling
           unknownRoute: GetPage(
             name: '/notfound',
             page: () => const NotFoundPage(),
@@ -134,12 +102,10 @@ class MyApp extends StatelessWidget {
       final parts = savedLocale.split('_');
       return Locale(parts[0], parts.length > 1 ? parts[1] : '');
     }
-
     return Get.deviceLocale ?? const Locale('en', 'US');
   }
 }
 
-// Theme Controller for better theme management
 class ThemeController extends GetxController {
   final GetStorage _storage = GetStorage();
   late ThemeMode _themeMode;
@@ -173,7 +139,6 @@ class ThemeController extends GetxController {
   }
 }
 
-// Enhanced Navigation Controller with better state management
 class NavigationController extends GetxController {
   final RxInt _selectedIndex = 0.obs;
   final List<GlobalKey<NavigatorState>> navigatorKeys = [
@@ -188,7 +153,6 @@ class NavigationController extends GetxController {
 
   void onTabSelected(int index) {
     if (index == _selectedIndex.value) {
-      // Pop to first route if tapping the same tab
       navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
     } else {
       _selectedIndex.value = index;
@@ -207,7 +171,6 @@ class NavigationController extends GetxController {
   }
 }
 
-// Enhanced FarahHub with better error handling and performance
 class FarahHub extends StatelessWidget {
   const FarahHub({super.key});
 
@@ -288,7 +251,6 @@ class FarahHub extends StatelessWidget {
   }
 }
 
-// Error fallback app
 class ErrorApp extends StatelessWidget {
   const ErrorApp({super.key});
 
@@ -321,7 +283,6 @@ class ErrorApp extends StatelessWidget {
   }
 }
 
-// 404 Page
 class NotFoundPage extends StatelessWidget {
   const NotFoundPage({super.key});
 

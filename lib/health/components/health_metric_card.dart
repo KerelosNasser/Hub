@@ -5,7 +5,7 @@ class HealthMetricCard extends StatelessWidget {
   final String value;
   final String unit;
   final IconData icon;
-  final Color color;
+  final Color iconColor; // Changed from 'color' to 'iconColor' for clarity
   final VoidCallback onTap;
 
   const HealthMetricCard({
@@ -14,34 +14,58 @@ class HealthMetricCard extends StatelessWidget {
     required this.value,
     required this.unit,
     required this.icon,
-    required this.color,
+    required this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final Color cardBackgroundColor = Colors.pink.shade900;
+    final Color primaryTextColor = const Color(0xffedf3ff);
+    final Color secondaryTextColor = primaryTextColor.withOpacity(0.7);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double iconSize = screenWidth < 600 ? 28 : 32;
+    final double titleFontSize = screenWidth < 600 ? 14 : 16;
+    final double valueFontSize = screenWidth < 600 ? 18 : 20;
+    final double unitFontSize = screenWidth < 600 ? 12 : 14;
+
+    return Card(
+      elevation: 4,
+      color: cardBackgroundColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(screenWidth * 0.03), // Responsive padding
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(icon, size: 32, color: color),
-              const SizedBox(height: 8),
+              Icon(icon, size: iconSize, color: iconColor),
+              SizedBox(height: screenWidth * 0.015),
               Text(
                 title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$value $unit',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 20, color: color, fontWeight: FontWeight.w500),
+                    fontSize: titleFontSize,
+                    fontWeight: FontWeight.bold,
+                    color: primaryTextColor),
+              ),
+              SizedBox(height: screenWidth * 0.01),
+              Text(
+                value,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: valueFontSize,
+                    color: iconColor,
+                    fontWeight: FontWeight.w600),
+              ),
+              Text(
+                unit,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: unitFontSize, color: secondaryTextColor),
               ),
             ],
           ),
