@@ -1,8 +1,8 @@
-import 'package:farahs_hub/core/services/database_service.dart';
 import 'package:farahs_hub/daily_lessons/lessons-cotroller.dart';
 import 'package:farahs_hub/main.dart';
 import 'package:farahs_hub/mainScreen/controller.dart';
-import 'package:farahs_hub/notes/controller.dart';
+import 'package:farahs_hub/notes/controllers/note_controller.dart';
+import 'package:farahs_hub/notes/services/database_service.dart';
 import 'package:get/get.dart';
 import 'package:farahs_hub/health/health_controller.dart';
 
@@ -10,7 +10,7 @@ class AppBinding extends Bindings {
   @override
   void dependencies() {
     try {
-      Get.put(DatabaseService(), permanent: true);
+      Get.put(DatabaseService.instance, permanent: true);
 
       Get.put(FarahhubController());
       Get.put(NoteController());

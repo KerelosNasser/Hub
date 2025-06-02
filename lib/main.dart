@@ -1,7 +1,7 @@
 import 'package:farahs_hub/core/bindings/app_binding.dart';
 import 'package:farahs_hub/core/routes/app_pages.dart';
 import 'package:farahs_hub/core/services/notification_service.dart';
-import 'package:farahs_hub/core/translations/app_translations.dart';
+import 'package:farahs_hub/core/services/home_widget_service.dart';
 import 'package:farahs_hub/health/health_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,10 +12,11 @@ import 'AI/FeatureScreens/FreeAIToolsPage.dart';
 import 'daily_lessons/LessonPage.dart';
 import 'mainScreen/FarahHub_screen.dart';
 import 'mainScreen/controller.dart';
-import 'notes/NoteList-screen.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'notes/views/note_list_screen.dart'; // Using modular structure
+import 'notes/views/note_edit_screen.dart'; // Using modular structure
 import 'package:hive_flutter/hive_flutter.dart';
 import 'daily_lessons/lessons_model.dart';
+import 'package:farahs_hub/health/health_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,9 +42,28 @@ Future<void> _initializeServices() async {
     Hive.registerAdapter(LessonModelAdapter());
   }
 
+  // Initialize notification service
   final notificationService = NotificationService();
   await notificationService.init();
   Get.put(notificationService, permanent: true);
+  
+  // Schedule all app notifications (Bible reminder and daily summary)
+  await notificationService.scheduleAllNotifications();
+
+  // Initialize home widget service with error handling
+  try {
+    final homeWidgetService = HomeWidgetService();
+    await homeWidgetService.init();
+    Get.put(homeWidgetService, permanent: true);
+  } catch (e) {
+    debugPrint('Failed to initialize home widget service: $e');
+    // Continue app initialization even if home widget fails
+  }
+
+  // Initialize awesome notifications and health notification service
+  final healthNotificationService = HealthNotificationService();
+  await healthNotificationService.init();
+  Get.put(healthNotificationService, permanent: true);
 }
 
 class MyApp extends StatelessWidget {
@@ -71,38 +91,31 @@ class MyApp extends StatelessWidget {
           ),
           themeMode: themeController.themeMode,
           initialBinding: AppBinding(),
-          translations: AppTranslations(),
-          locale: _getLocale(),
-          fallbackLocale: const Locale('en', 'US'),
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', 'US'),
-            Locale('ar', 'SA'),
-          ],
           getPages: AppPages.routes,
           initialRoute: hasCompletedOnboarding ? Routes.HUB : Routes.ONBOARDING,
           unknownRoute: GetPage(
             name: '/notfound',
             page: () => const NotFoundPage(),
           ),
+          // Register route mapping for deep links from home widget
+          onGenerateRoute: (settings) {
+            if (settings.name?.startsWith('farahshub://notes/add') ?? false) {
+              // Route to create a new note
+              return GetPageRoute(
+                page: () => NoteEditScreen(),
+              );
+            } else if (settings.name?.startsWith('farahshub://notes') ??
+                false) {
+              // Route to the notes list
+              return GetPageRoute(
+                page: () => NoteListScreen(),
+              );
+            }
+            return null;
+          },
         );
       },
     );
-  }
-
-  Locale _getLocale() {
-    final box = GetStorage();
-    final savedLocale = box.read('app_locale');
-
-    if (savedLocale != null) {
-      final parts = savedLocale.split('_');
-      return Locale(parts[0], parts.length > 1 ? parts[1] : '');
-    }
-    return Get.deviceLocale ?? const Locale('en', 'US');
   }
 }
 
@@ -150,7 +163,6 @@ class NavigationController extends GetxController {
   ];
 
   int get selectedIndex => _selectedIndex.value;
-
   void onTabSelected(int index) {
     if (index == _selectedIndex.value) {
       navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
@@ -162,7 +174,6 @@ class NavigationController extends GetxController {
   bool onWillPop() {
     final NavigatorState? navigatorState =
         navigatorKeys[_selectedIndex.value].currentState;
-
     if (navigatorState?.canPop() == true) {
       navigatorState!.pop();
       return false;

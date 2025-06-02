@@ -1,6 +1,6 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 
 class NotificationService extends GetxService {
   static NotificationService get to => Get.find();
@@ -8,40 +8,51 @@ class NotificationService extends GetxService {
   Future<NotificationService> init() async {
     try {
       await AwesomeNotifications().initialize(
-        'resource://drawable/ic_notification',
-        [
-          NotificationChannel(
-            channelKey: 'app_notifications',
-            channelName: 'App Notifications',
-            channelDescription: 'General notifications for the app.',
-            importance: NotificationImportance.High,
-            defaultRingtoneType: DefaultRingtoneType.Notification,
-            playSound: true,
-            enableVibration: true,
-          ),
-          NotificationChannel(
-            channelKey: 'bible_reminder',
-            channelName: 'Bible Reading Reminders',
-            channelDescription: 'Daily reminders to read the Bible.',
-            importance: NotificationImportance.High,
-            defaultRingtoneType: DefaultRingtoneType.Notification,
-            locked: true,
-            criticalAlerts: true,
-            playSound: true,
-            enableVibration: true,
-          ),
-          NotificationChannel(
-            channelKey: 'daily_lessons',
-            channelName: 'Daily Lesson Reminders',
-            channelDescription: 'Reminders for new daily lessons.',
-            importance: NotificationImportance.Default,
-            defaultRingtoneType: DefaultRingtoneType.Notification,
-            playSound: true,
-            enableVibration: true,
-          )
-        ],
-        debug: false, // Set to false for production
-      );
+          'resource://drawable/ic_notification',
+          [
+            NotificationChannel(
+              channelKey: 'bible_reminder',
+              channelName: 'Bible Reading Reminders',
+              channelDescription: 'Daily reminders to read the Bible.',
+              importance: NotificationImportance.High,
+              defaultRingtoneType: DefaultRingtoneType.Notification,
+              locked: true,
+              criticalAlerts: true,
+              playSound: true,
+              enableVibration: true,
+            ),
+            NotificationChannel(
+              channelKey: 'daily_lessons',
+              channelName: 'Daily Lesson Reminders',
+              channelDescription: 'Reminders for new daily lessons.',
+              importance: NotificationImportance.Default,
+              defaultRingtoneType: DefaultRingtoneType.Notification,
+              playSound: true,
+              enableVibration: true,
+            ),
+            NotificationChannel(
+              channelKey: 'health_updates',
+              channelName: 'Health Stat Updates',
+              channelDescription: 'Updates about your health statistics.',
+              importance: NotificationImportance.Default,
+              defaultRingtoneType: DefaultRingtoneType.Notification,
+              locked: false,
+              playSound: false,
+              enableVibration: false,
+              onlyAlertOnce: true,
+            ),
+            NotificationChannel(
+              channelKey: 'daily_summary',
+              channelName: 'Daily Summary Reminder',
+              channelDescription: 'Reminder to add your daily summary note.',
+              importance: NotificationImportance.High,
+              defaultRingtoneType: DefaultRingtoneType.Notification,
+              playSound: true,
+              enableVibration: true,
+              ledColor: Colors.blue,
+            )
+          ],
+          debug: false);
 
       bool isAllowedToSendNotifications =
           await AwesomeNotifications().isNotificationAllowed();
@@ -58,14 +69,8 @@ class NotificationService extends GetxService {
         ]);
       }
       return this;
-    } catch (e) {
-      Get.snackbar(
-        'Notification Setup Error',
-        'Could not initialize notifications. Some alert features might not work as expected.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    } catch (_) {
+      // Silent fail in production
       return this;
     }
   }
@@ -101,14 +106,8 @@ class NotificationService extends GetxService {
         schedule: schedule,
         actionButtons: actionButtons,
       );
-    } catch (e) {
-      Get.snackbar(
-        'Scheduling Error',
-        'Could not schedule notification: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    } catch (_) {
+      // Silent fail in production
     }
   }
 
@@ -117,10 +116,13 @@ class NotificationService extends GetxService {
     const String bibleChannelKey = 'bible_reminder';
 
     try {
+      // Cancel any existing notifications first
       await AwesomeNotifications()
           .cancelNotificationsByChannelKey(bibleChannelKey);
 
-      await scheduleNotification(
+      // Fixed Bible reminder - using createNotification directly for better reliability
+      await AwesomeNotifications().createNotification(
+        content: NotificationContent(
           id: bibleReminderId,
           channelKey: bibleChannelKey,
           title: '📖 Time for Daily Bible Reading 🙏',
@@ -129,50 +131,91 @@ class NotificationService extends GetxService {
           payload: {'navigationPath': '/bible_reading_screen'},
           notificationLayout: NotificationLayout.BigText,
           summary: 'Daily Devotion',
-          schedule: NotificationCalendar(
-            hour: 23,
-            minute: 0,
-            second: 0,
-            repeats: true,
-          ),
-          actionButtons: [
-            NotificationActionButton(
-                key: 'MARK_AS_READ', label: 'Mark as Read'),
-            NotificationActionButton(
-                key: 'SNOOZE_BIBLE', label: 'Snooze for 1 Hour'),
-          ]);
-    } catch (e) {
-      Get.snackbar(
-        'Reminder Setup Error',
-        'Failed to schedule daily Bible reminder.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+          wakeUpScreen: true,
+          category: NotificationCategory.Reminder,
+        ),
+        schedule: NotificationCalendar(
+          hour: 12, // Changed to morning time (9 AM) instead of 11 PM
+          minute: 0,
+          second: 0,
+          repeats: true,
+          allowWhileIdle:
+              true, // Will trigger even if device is in low-power mode
+        ),
+        actionButtons: [
+          NotificationActionButton(key: 'OPEN_BIBLE', label: 'Open Bible'),
+          NotificationActionButton(key: 'SNOOZE_BIBLE', label: 'Snooze'),
+        ],
       );
+    } catch (e) {
+      // Silent fail for Bible reminder
+      debugPrint('Failed to schedule Bible reminder: $e');
+    }
+  }
+
+  Future<void> scheduleDailySummaryReminder() async {
+    const int summaryReminderId = 300;
+    const String summaryChannelKey = 'daily_summary';
+
+    try {
+      // Cancel any existing notifications first
+      await AwesomeNotifications()
+          .cancelNotificationsByChannelKey(summaryChannelKey);
+
+      // Schedule the daily summary reminder at 11 PM
+      await AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: summaryReminderId,
+          channelKey: summaryChannelKey,
+          title: '✨ Reflect on Your Day ✨',
+          body: 'Take a moment to jot down your thoughts about today. What went well? What are you grateful for?',
+          payload: {'navigationPath': '/notes/new?type=daily_summary'},
+          notificationLayout: NotificationLayout.BigText,
+          summary: 'Daily Reflection',
+          wakeUpScreen: true,
+          category: NotificationCategory.Reminder,
+        ),
+        schedule: NotificationCalendar(
+          hour: 23, // 11 PM
+          minute: 0,
+          second: 0,
+          repeats: true,
+          allowWhileIdle: true, // Will trigger even in low-power mode
+          preciseAlarm: true, // Ensures the notification is delivered at the exact time
+        ),
+        actionButtons: [
+          NotificationActionButton(key: 'ADD_NOTE', label: 'Add Summary'),
+          NotificationActionButton(key: 'SNOOZE_SUMMARY', label: 'Remind Later'),
+        ],
+      );
+
+      debugPrint('Daily summary reminder scheduled for 11:00 PM');
+    } catch (e) {
+      debugPrint('Failed to schedule daily summary reminder: $e');
     }
   }
 
   Future<void> cancelNotification(int id) async {
     try {
       await AwesomeNotifications().cancel(id);
-    } catch (e) {
-      // Optionally log this error to a more persistent logging service in production
+    } catch (_) {
+      // Silent fail
     }
   }
 
   Future<void> cancelAllScheduledNotifications() async {
     try {
       await AwesomeNotifications().cancelAllSchedules();
-    } catch (e) {
-      // Optionally log
+    } catch (_) {
+      // Silent fail
     }
   }
 
   Future<void> cancelAllNotifications() async {
     try {
       await AwesomeNotifications().cancelAll();
-    } catch (e) {
-      // Optionally log
+    } catch (_) {
+      // Silent fail
     }
   }
 
@@ -189,8 +232,22 @@ class NotificationService extends GetxService {
             NotificationActionController.onDismissActionReceivedMethod,
       );
     } catch (e) {
-      // Optionally log
+      debugPrint('Failed to initialize notification listeners: $e');
     }
+  }
+
+  // Schedule all the app's notifications
+  Future<void> scheduleAllNotifications() async {
+    // Schedule the Bible reminder
+    await scheduleDailyBibleReminder();
+    
+    // Schedule the daily summary reminder
+    await scheduleDailySummaryReminder();
+    
+    // We don't need to schedule health notifications here as they're handled
+    // by the health service directly
+    
+    debugPrint('All notifications scheduled successfully');
   }
 
   Future<bool> areNotificationsEnabled() async {
@@ -201,7 +258,7 @@ class NotificationService extends GetxService {
     try {
       return AwesomeNotifications()
           .getInitialNotificationAction(removeFromActionEvents: true);
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -231,12 +288,48 @@ class NotificationActionController {
       ReceivedAction receivedAction) async {
     final payload = receivedAction.payload;
     if (payload != null && payload.containsKey('navigationPath')) {
+      final navigationPath = payload['navigationPath'];
+      
+      // Add any specific handling for the daily summary notification
+      if (navigationPath == '/notes/new?type=daily_summary' && 
+          receivedAction.buttonKeyPressed == 'ADD_NOTE') {
+        // Logic to open the notes screen with a daily summary template
+        // This will be handled by the app's navigation system when it's running
+        debugPrint('User wants to add a daily summary note');
+      }
+      
       // Handle navigation or action based on payload
       // Ensure this logic is robust for background execution
     }
 
     if (receivedAction.buttonKeyPressed.isNotEmpty) {
-      // Handle button presses
+      // Handle specific button actions
+      if (receivedAction.buttonKeyPressed == 'SNOOZE_SUMMARY') {
+        // Reschedule the reminder for 30 minutes later
+        await AwesomeNotifications().createNotification(
+          content: NotificationContent(
+            id: 301, // Different ID to avoid conflicts
+            channelKey: 'daily_summary',
+            title: '✨ Reflect on Your Day ✨',
+            body: 'Take a moment to jot down your thoughts about today. What went well? What are you grateful for?',
+            payload: {'navigationPath': '/notes/new?type=daily_summary'},
+            notificationLayout: NotificationLayout.BigText,
+            summary: 'Daily Reflection',
+          ),
+          schedule: NotificationCalendar(
+            minute: DateTime.now().minute + 30 > 59 
+                  ? (DateTime.now().minute + 30) % 60 
+                  : DateTime.now().minute + 30,
+            hour: DateTime.now().minute + 30 > 59 
+                  ? (DateTime.now().hour + 1) % 24 
+                  : DateTime.now().hour,
+            second: 0,
+            repeats: false,
+            allowWhileIdle: true,
+          ),
+        );
+        debugPrint('Daily summary reminder snoozed for 30 minutes');
+      }
     }
   }
 }

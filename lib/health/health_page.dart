@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'health_controller.dart';
+import 'health_notification_service.dart';
 import 'components/health_chart.dart';
 import 'components/health_metric_card.dart';
 
@@ -11,6 +12,7 @@ class HealthPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HealthController controller = Get.find<HealthController>();
+    final HealthNotificationService notificationService = Get.find<HealthNotificationService>();
     final Color primaryTextColor = const Color(0xffedf3ff);
     final Color secondaryTextColor = primaryTextColor.withOpacity(0.7);
     final Color pageBackgroundColor = Colors.pink.shade800;
@@ -194,6 +196,70 @@ class HealthPage extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: screenWidth * 0.06),
+                  
+                  // Health Notification Controls
+                  Container(
+                    padding: EdgeInsets.all(horizontalPadding),
+                    margin: EdgeInsets.only(bottom: screenWidth * 0.06),
+                    decoration: BoxDecoration(
+                      color: Colors.pink.shade700,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.notifications_active, color: primaryTextColor),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Health Notification',
+                                  style: TextStyle(
+                                    fontSize: titleFontSize * 0.8,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryTextColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Obx(() => Switch(
+                              value: notificationService.isEnabled.value,
+                              onChanged: (value) {
+                                notificationService.toggleNotification();
+                              },
+                              activeColor: Colors.blue.shade300,
+                              inactiveThumbColor: secondaryTextColor,
+                            )),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Displays your steps and calories burned in a permanent notification',
+                          style: TextStyle(
+                            fontSize: subtitleFontSize * 0.9,
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        Obx(() => Text(
+                          notificationService.isEnabled.value
+                              ? 'Current stats: ${notificationService.steps.value} steps | ${notificationService.calories.value.toStringAsFixed(1)} calories'
+                              : 'Enable to see your health stats in the notification area',
+                          style: TextStyle(
+                            fontSize: subtitleFontSize * 0.9,
+                            fontStyle: FontStyle.italic,
+                            color: notificationService.isEnabled.value 
+                                ? Colors.green.shade200 
+                                : Colors.orange.shade200,
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
+                  
                   if (controller.stepData.isNotEmpty)
                     HealthChart(
                         data: controller.stepData,
