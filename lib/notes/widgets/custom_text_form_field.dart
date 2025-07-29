@@ -14,7 +14,7 @@ class CustomTextFormField extends StatefulWidget {
   final FocusNode? focusNode;
 
   const CustomTextFormField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.label,
     this.hint = '',
@@ -26,7 +26,7 @@ class CustomTextFormField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.onChanged,
     this.focusNode,
-  }) : super(key: key);
+  });
 
   @override
   _CustomTextFormFieldState createState() => _CustomTextFormFieldState();

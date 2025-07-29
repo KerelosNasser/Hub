@@ -11,7 +11,7 @@ import '../widgets/notes_staggered_grid.dart';
 import '../widgets/notes_empty_state.dart';
 
 class NoteListScreen extends StatefulWidget {
-  const NoteListScreen({Key? key}) : super(key: key);
+  const NoteListScreen({super.key});
 
   @override
   _NoteListScreenState createState() => _NoteListScreenState();

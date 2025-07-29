@@ -4,16 +4,16 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../models/note_model.dart';
 import '../views/note_edit_screen.dart';
-
+import '../views/note_memory_frame.dart';
 class NoteGridItem extends StatelessWidget {
   final Note note;
   final VoidCallback onDelete;
 
   const NoteGridItem({
-    Key? key,
+    super.key,
     required this.note,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +21,11 @@ class NoteGridItem extends StatelessWidget {
     final Color noteColor = _getColorFromHex(note.color);
 
     return GestureDetector(
+
       onTap: () => Get.to(
-        () => NoteEditScreen(noteId: note.id),
-        transition: Transition.cupertino,
+        () => NoteMemoryFrame(note: note),
+        transition: Transition.fadeIn,
+        duration: Duration(milliseconds: 300),
       ),
       onLongPress: () => _showOptionsDialog(context),
       child: Container(
@@ -110,7 +112,7 @@ class NoteGridItem extends StatelessWidget {
                 if (note.imagePaths.isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(top: 8),
-                    child: Container(
+                    child: SizedBox(
                       height: 120,
                       width: double.infinity,
                       child: Image.file(
@@ -124,7 +126,7 @@ class NoteGridItem extends StatelessWidget {
                     note.drawingPath!.isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(top: 8),
-                    child: Container(
+                    child: SizedBox(
                       height: 120,
                       width: double.infinity,
                       child: Image.file(

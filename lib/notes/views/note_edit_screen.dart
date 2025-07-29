@@ -12,7 +12,7 @@ import '../widgets/drawing_canvas_widget.dart';
 class NoteEditScreen extends StatefulWidget {
   final int? noteId;
 
-  const NoteEditScreen({Key? key, this.noteId}) : super(key: key);
+  const NoteEditScreen({super.key, this.noteId});
 
   @override
   _NoteEditScreenState createState() => _NoteEditScreenState();
@@ -135,6 +135,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     );
   }
 
+  // Replace _buildTitleSection() with:
   Widget _buildTitleSection() {
     return Container(
       decoration: BoxDecoration(
@@ -153,6 +154,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         controller: _titleController,
         decoration: InputDecoration(
           labelText: 'Title',
+          labelStyle: TextStyle(color: Colors.black87),
           border: InputBorder.none,
           contentPadding: EdgeInsets.zero,
           icon: Icon(Icons.title, color: _getColorFromHex(_selectedColor)),
@@ -160,6 +162,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
+          color: Colors.amberAccent,
         ),
         maxLines: 2,
         validator: (value) {
@@ -198,8 +201,9 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                 Text(
                   'Date',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold
                   ),
                 ),
                 SizedBox(height: 4),
@@ -208,6 +212,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: Colors.black,
                   ),
                 ),
               ],
@@ -220,6 +225,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     );
   }
 
+  // Replace _buildDescriptionSection() with:
   Widget _buildDescriptionSection() {
     return Container(
       decoration: BoxDecoration(
@@ -238,19 +244,23 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         controller: _descriptionController,
         decoration: InputDecoration(
           labelText: 'Description',
+          labelStyle: TextStyle(color: Colors.black87),
           alignLabelWithHint: true,
           border: InputBorder.none,
           contentPadding: EdgeInsets.zero,
-          icon:
-              Icon(Icons.description, color: _getColorFromHex(_selectedColor)),
+          icon: Icon(Icons.description, color: _getColorFromHex(_selectedColor)),
         ),
-        style: TextStyle(fontSize: 16),
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.black,
+        ),
         maxLines: 5,
         minLines: 3,
       ),
     );
   }
 
+  // Replace _buildImagesSection() with:
   Widget _buildImagesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,28 +276,116 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                 color: Colors.white,
               ),
             ),
-            ElevatedButton.icon(
-              onPressed: _pickImage,
-              icon: Icon(Icons.add_photo_alternate),
-              label: Text('Add Image'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink.shade600,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
+            Row(
+              children: [
+                if (_imagePaths.length < 9)
+                  ElevatedButton.icon(
+                    onPressed: _pickImageFromCamera,
+                    icon: Icon(Icons.camera_alt, size: 18),
+                    label: Text('Camera'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink.shade600,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  ),
+                SizedBox(width: 8),
+                if (_imagePaths.length < 9)
+                  ElevatedButton.icon(
+                    onPressed: _pickImage,
+                    icon: Icon(Icons.photo_library, size: 18),
+                    label: Text('Gallery'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink.shade600,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
         SizedBox(height: 16),
         _imagePaths.isEmpty
             ? _buildEmptyImagesPlaceholder()
-            : _buildImageCollage(),
+            : _buildImageGrid(),
       ],
     );
   }
 
+  // Replace _buildImageCollage() with _buildImageGrid():
+  Widget _buildImageGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _imagePaths.length,
+      itemBuilder: (context, index) {
+        return Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(_imagePaths[index]),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: () => _removeImage(index),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, size: 16, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Add these new methods:
+  Future<void> _pickImageFromCamera() async {
+    if (_imagePaths.length >= 9) {
+      Get.snackbar('Limit Reached', 'Maximum 9 images allowed');
+      return;
+    }
+
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _imagePaths.add(pickedFile.path);
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _imagePaths.removeAt(index);
+    });
+  }
+
+  // Update _buildEmptyImagesPlaceholder():
   Widget _buildEmptyImagesPlaceholder() {
     return Container(
       height: 150,
@@ -300,18 +398,11 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.image,
-              size: 48,
-              color: Colors.pink.shade600,
-            ),
+            Icon(Icons.photo_outlined, size: 48, color: Colors.grey.shade600),
             SizedBox(height: 8),
             Text(
-              'No images added yet',
-              style: TextStyle(
-                color: Colors.pink.shade600,
-                fontSize: 14,
-              ),
+              'Add up to 9 images',
+              style: TextStyle(color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -395,7 +486,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   }
 
   Widget _buildSingleImage(double width, double height) {
-    return Container(
+    return SizedBox(
       width: width,
       height: height,
       child: Stack(
@@ -453,7 +544,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
             child: Container(
               padding: EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -631,12 +722,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         _imagePaths.add(image.path);
       });
     }
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      _imagePaths.removeAt(index);
-    });
   }
 
   void _openDrawingCanvas() {

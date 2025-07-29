@@ -10,10 +10,10 @@ class DrawingCanvasWidget extends StatefulWidget {
   final String? initialDrawingPath;
 
   const DrawingCanvasWidget({
-    Key? key,
+    super.key,
     required this.onSave,
     this.initialDrawingPath,
-  }) : super(key: key);
+  });
 
   @override
   _DrawingCanvasWidgetState createState() => _DrawingCanvasWidgetState();

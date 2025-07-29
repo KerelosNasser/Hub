@@ -10,14 +10,14 @@ class FramedImageWidget extends StatelessWidget {
   final bool isAsset;
 
   const FramedImageWidget({
-    Key? key,
+    super.key,
     required this.imagePath,
     this.frameStyle = 'minimal',
     this.width = double.infinity,
     this.height = 200,
     this.fit = BoxFit.cover,
     this.isAsset = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

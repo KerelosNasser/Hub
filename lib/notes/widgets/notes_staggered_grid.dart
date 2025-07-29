@@ -8,10 +8,10 @@ class NotesStaggeredGrid extends StatelessWidget {
   final Function(Note) onDeleteNote;
 
   const NotesStaggeredGrid({
-    Key? key,
+    super.key,
     required this.notes,
     required this.onDeleteNote,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

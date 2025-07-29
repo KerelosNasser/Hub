@@ -14,13 +14,13 @@ class NotesEmptyState extends StatelessWidget {
   final bool hasDateFilter;
 
   const NotesEmptyState({
-    Key? key,
+    super.key,
     required this.type,
     this.errorMessage,
     this.onRetry,
     this.hasSearchQuery = false,
     this.hasDateFilter = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,10 +6,10 @@ class NoteDateFilterChip extends StatelessWidget {
   final VoidCallback onClear;
 
   const NoteDateFilterChip({
-    Key? key,
+    super.key,
     required this.date,
     required this.onClear,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

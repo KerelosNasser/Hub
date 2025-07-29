@@ -9,13 +9,13 @@ class NoteSearchBar extends StatelessWidget {
   final VoidCallback onRefresh;
 
   const NoteSearchBar({
-    Key? key,
+    super.key,
     required this.controller,
     required this.searchQuery,
     required this.onClear,
     required this.onDateFilter,
     required this.onRefresh,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
