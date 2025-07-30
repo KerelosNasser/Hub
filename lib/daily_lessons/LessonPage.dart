@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'lessons-cotroller.dart';
+import 'speak_mate/pages/speak_mate_page.dart';
 
 class LessonScreen extends StatelessWidget {
   final LessonController _controller = Get.put(LessonController());
@@ -27,6 +29,30 @@ class LessonScreen extends StatelessWidget {
         ),
         backgroundColor: Colors.pink.shade900,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              FontAwesomeIcons.comments,
+              color: Colors.white,
+            ),
+            tooltip: 'SpeakMate - Practice Speaking',
+            onPressed: () {
+              Get.to(() => SpeakMatePage(),
+                  transition: Transition.rightToLeft,
+                  duration: Duration(milliseconds: 300));
+            },
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Get.to(() => SpeakMatePage(),
+              transition: Transition.rightToLeft,
+              duration: Duration(milliseconds: 300));
+        },
+        backgroundColor: Colors.pink.shade900,
+        icon: Icon(FontAwesomeIcons.microphone),
+        label: Text('Practice Speaking'),
       ),
       body: Obx(() {
         if (!_controller.isLessonAvailable.value) {

@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:math' as math;
 
 class DrawingCanvasWidget extends StatefulWidget {
   final Function(String) onSave;
