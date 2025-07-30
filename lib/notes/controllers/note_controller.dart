@@ -1,23 +1,33 @@
+import 'package:farahs_hub/notes/services/hybird_database_service.dart';
 import 'package:get/get.dart';
 import '../models/note_model.dart';
-import '../services/database_service.dart';
 
 class NoteController extends GetxController {
-  final DatabaseService _db = DatabaseService.instance;
+  final HybridDatabaseService _db = HybridDatabaseService.instance;
   
   // Reactive variables
   final RxList<Note> notes = <Note>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool hasError = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxBool isSyncing = false.obs;
+  final RxBool isOnline = true.obs;
+  final RxMap<String, int> syncStatus = <String, int>{}.obs;
   
   @override
   void onInit() {
     super.onInit();
-    loadNotes();
+    _initialize();
   }
   
-  // Load all notes from database
+  Future<void> _initialize() async {
+    await _db.initialize();
+    loadNotes();
+    _updateConnectionStatus();
+    _updateSyncStatus();
+  }
+  
+  // Load all notes from local database
   Future<void> loadNotes() async {
     try {
       isLoading.value = true;
@@ -46,6 +56,7 @@ class NoteController extends GetxController {
       int result = await _db.insertNote(note);
       if (result > 0) {
         await loadNotes();
+        _updateSyncStatus();
         Get.snackbar('Success', 'Note added successfully',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Get.theme.colorScheme.primary.withOpacity(0.8),
@@ -80,6 +91,7 @@ class NoteController extends GetxController {
       int result = await _db.updateNote(note);
       if (result > 0) {
         await loadNotes();
+        _updateSyncStatus();
         Get.snackbar('Success', 'Note updated successfully',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Get.theme.colorScheme.primary.withOpacity(0.8),
@@ -114,6 +126,7 @@ class NoteController extends GetxController {
       int result = await _db.deleteNote(id);
       if (result > 0) {
         await loadNotes();
+        _updateSyncStatus();
         Get.snackbar('Success', 'Note deleted successfully',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Get.theme.colorScheme.primary.withOpacity(0.8),
@@ -191,5 +204,144 @@ class NoteController extends GetxController {
       );
       return [];
     }
+  }
+  
+  // Sync and Backup Operations
+  Future<void> syncAllToCloud() async {
+    if (!isOnline.value) {
+      Get.snackbar('Offline', 'No internet connection available',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.surface,
+        colorText: Get.theme.colorScheme.onSurface,
+      );
+      return;
+    }
+    
+    try {
+      isSyncing.value = true;
+      
+      bool success = await _db.syncAllToAppwrite();
+      
+      if (success) {
+        await _updateSyncStatus();
+        Get.snackbar('Success', 'All notes synced to cloud',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Get.theme.colorScheme.primary.withOpacity(0.8),
+          colorText: Get.theme.colorScheme.onPrimary,
+        );
+      } else {
+        Get.snackbar('Sync Failed', 'Some notes could not be synced',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Get.theme.colorScheme.error.withOpacity(0.8),
+          colorText: Get.theme.colorScheme.onError,
+        );
+      }
+    } catch (e) {
+      Get.snackbar('Sync Error', 'Failed to sync notes: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error.withOpacity(0.8),
+        colorText: Get.theme.colorScheme.onError,
+      );
+    } finally {
+      isSyncing.value = false;
+    }
+  }
+  
+  Future<void> restoreFromCloud() async {
+    if (!isOnline.value) {
+      Get.snackbar('Offline', 'No internet connection available',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.surface,
+        colorText: Get.theme.colorScheme.onSurface,
+      );
+      return;
+    }
+    
+    try {
+      isSyncing.value = true;
+      
+      bool success = await _db.restoreFromAppwrite();
+      
+      if (success) {
+        await loadNotes();
+        await _updateSyncStatus();
+        Get.snackbar('Success', 'Notes restored from cloud',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Get.theme.colorScheme.primary.withOpacity(0.8),
+          colorText: Get.theme.colorScheme.onPrimary,
+        );
+      } else {
+        Get.snackbar('Restore Failed', 'Could not restore notes from cloud',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Get.theme.colorScheme.error.withOpacity(0.8),
+          colorText: Get.theme.colorScheme.onError,
+        );
+      }
+    } catch (e) {
+      Get.snackbar('Restore Error', 'Failed to restore notes: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error.withOpacity(0.8),
+        colorText: Get.theme.colorScheme.onError,
+      );
+    } finally {
+      isSyncing.value = false;
+    }
+  }
+  
+  Future<void> exportBackup() async {
+    try {
+      isSyncing.value = true;
+      
+      String backupPath = await _db.exportBackupToFile();
+      
+      Get.snackbar('Backup Created', 'Backup saved to: ${backupPath.split('/').last}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.primary.withOpacity(0.8),
+        colorText: Get.theme.colorScheme.onPrimary,
+        duration: Duration(seconds: 4),
+      );
+    } catch (e) {
+      Get.snackbar('Backup Failed', 'Could not create backup: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error.withOpacity(0.8),
+        colorText: Get.theme.colorScheme.onError,
+      );
+    } finally {
+      isSyncing.value = false;
+    }
+  }
+  
+  Future<void> checkConnectionStatus() async {
+    await _db.checkConnection();
+    _updateConnectionStatus();
+  }
+  
+  void _updateConnectionStatus() {
+    isOnline.value = _db.isOnline;
+  }
+  
+  Future<void> _updateSyncStatus() async {
+    try {
+      Map<String, int> status = await _db.getSyncStatus();
+      syncStatus.assignAll(status);
+    } catch (e) {
+      print('Error updating sync status: $e');
+    }
+  }
+  
+  // Getters for UI
+  int get totalNotes => syncStatus['total'] ?? 0;
+  int get syncedNotes => syncStatus['synced'] ?? 0;
+  int get pendingNotes => syncStatus['pending'] ?? 0;
+  int get failedNotes => syncStatus['failed'] ?? 0;
+  
+  bool get hasUnsyncedNotes => pendingNotes > 0 || failedNotes > 0;
+  
+  String get syncStatusText {
+    if (!isOnline.value) return 'Offline';
+    if (isSyncing.value) return 'Syncing...';
+    if (hasUnsyncedNotes) return '$pendingNotes pending, $failedNotes failed';
+    if (totalNotes == 0) return 'No notes';
+    return 'All synced';
   }
 }

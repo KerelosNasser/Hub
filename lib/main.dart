@@ -42,7 +42,7 @@ Future<void> _initializeServices() async {
   final notificationService = NotificationService();
   await notificationService.init();
   Get.put(notificationService, permanent: true);
-  
+
   // Schedule all app notifications (Bible reminder and daily summary)
   await notificationService.scheduleAllNotifications();
 

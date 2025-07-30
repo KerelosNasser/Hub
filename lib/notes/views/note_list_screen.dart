@@ -1,3 +1,4 @@
+import 'package:farahs_hub/notes/widgets/backup.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -21,6 +22,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
   final TextEditingController _searchController = TextEditingController();
   final RxString searchQuery = ''.obs;
   final Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
+  final RxBool showSyncWidget = false.obs;
 
   @override
   void initState() {
@@ -73,6 +75,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
 
   void _refreshNotes() {
     _noteController.loadNotes();
+    _noteController.checkConnectionStatus();
   }
 
   void _confirmDeleteNote(Note note) {
@@ -115,6 +118,9 @@ class _NoteListScreenState extends State<NoteListScreen> {
             onRefresh: _refreshNotes,
           ),
 
+          // Sync status indicator (always visible, compact)
+          Obx(() => _buildSyncStatusBar()),
+
           // Date filter chip (only shows when date is selected)
           Obx(() => selectedDate.value != null
               ? NoteDateFilterChip(
@@ -122,6 +128,15 @@ class _NoteListScreenState extends State<NoteListScreen> {
                   onClear: _clearDateFilter,
                 )
               : SizedBox.shrink()),
+
+          // Expandable Sync Widget
+          Obx(() => AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            height: showSyncWidget.value ? null : 0,
+            child: showSyncWidget.value
+                ? SyncBackupWidget(noteController: _noteController)
+                : SizedBox.shrink(),
+          )),
 
           // Notes content
           Expanded(
@@ -194,10 +209,82 @@ class _NoteListScreenState extends State<NoteListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.to(() => NoteEditScreen()),
-        backgroundColor: Colors.pink.shade700,
-        child: Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // Sync status FAB
+          Obx(() => FloatingActionButton.small(
+            onPressed: () => showSyncWidget.value = !showSyncWidget.value,
+            backgroundColor: _noteController.hasUnsyncedNotes 
+                ? Colors.orange.shade600 
+                : Colors.green.shade600,
+            child: Icon(
+              showSyncWidget.value ? Icons.keyboard_arrow_up : Icons.cloud_queue,
+              color: Colors.white,
+            ),
+            heroTag: "sync_fab",
+          )),
+          SizedBox(height: 12),
+          // Add note FAB
+          FloatingActionButton(
+            onPressed: () => Get.to(() => NoteEditScreen()),
+            backgroundColor: Colors.pink.shade700,
+            child: Icon(Icons.add, color: Colors.white),
+            heroTag: "add_fab",
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSyncStatusBar() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.pink.shade800,
+      child: Row(
+        children: [
+          // Connection status
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: _noteController.isOnline.value ? Colors.green : Colors.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 8),
+          
+          // Sync status text
+          Expanded(
+            child: Text(
+              _noteController.syncStatusText,
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          
+          // Sync progress indicator
+          if (_noteController.isSyncing.value)
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+              ),
+            ),
+          
+          // Unsync indicator
+          if (_noteController.hasUnsyncedNotes && !_noteController.isSyncing.value)
+            Icon(
+              Icons.cloud_off,
+              color: Colors.orange.shade300,
+              size: 16,
+            ),
+        ],
       ),
     );
   }
