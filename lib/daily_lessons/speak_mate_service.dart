@@ -8,7 +8,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'speak_mate_model.dart';
 
 class SpeakMateService {
-  static const String _baseUrl = 'http://192.168.1.100:5000'; // Replace with your local IP
+  static const String _baseUrl = 'http://192.168.1.2:5000'; // Replace with your local IP
   static const String _chatEndpoint = '/chat';
   
   final SpeechToText _speechToText = SpeechToText();

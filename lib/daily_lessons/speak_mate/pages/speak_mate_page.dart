@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:intl/intl.dart';
 import '../controllers/speak_mate_controller.dart';
 import '../models/chat_message.dart';
@@ -16,8 +15,6 @@ class SpeakMatePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: _buildAppBar(context),

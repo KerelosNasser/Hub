@@ -55,9 +55,9 @@ class BottomNavyNavBar extends StatelessWidget {
             activeColor: Color(0xffedf3ff),
             inactiveColor: Colors.white70,
           ),
-          BottomNavyBarItem(
-            icon: Icon(FontAwesomeIcons.robot),
-            title: Text('AI'),
+            BottomNavyBarItem(
+            icon: Icon(FontAwesomeIcons.wallet),
+            title: Text('Expenses'),
             activeColor: Color(0xffedf3ff),
             inactiveColor: Colors.white70,
           ),

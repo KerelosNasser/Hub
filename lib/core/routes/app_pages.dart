@@ -1,4 +1,3 @@
-import 'package:farahs_hub/AI/FeatureScreens/FreeAIToolsPage.dart';
 import 'package:farahs_hub/core/bindings/hub_binding.dart';
 import 'package:farahs_hub/core/bindings/lessons_binding.dart';
 import 'package:farahs_hub/core/bindings/notes_binding.dart';
@@ -51,10 +50,6 @@ class AppPages {
       name: Routes.LESSONS,
       page: () => LessonScreen(),
       binding: LessonsBinding(),
-    ),
-    GetPage(
-      name: Routes.AI_TOOLS,
-      page: () => FreeAIToolsPage(),
     ),
     GetPage(
       name: Routes.HEALTH,

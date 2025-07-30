@@ -2,13 +2,13 @@ import 'package:farahs_hub/core/bindings/app_binding.dart';
 import 'package:farahs_hub/core/routes/app_pages.dart';
 import 'package:farahs_hub/core/services/notification_service.dart';
 import 'package:farahs_hub/core/services/home_widget_service.dart';
+import 'package:farahs_hub/expense_tracker/views/expense_tracker_page.dart';
 import 'package:farahs_hub/health/health_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:farahs_hub/widgets/NavBar_main.dart';
-import 'AI/FeatureScreens/FreeAIToolsPage.dart';
 import 'daily_lessons/LessonPage.dart';
 import 'mainScreen/FarahHub_screen.dart';
 import 'mainScreen/controller.dart';
@@ -21,17 +21,13 @@ import 'package:farahs_hub/health/health_notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
     await _initializeServices();
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
     runApp(const MyApp());
-  } catch (e) {
-    runApp(const ErrorApp());
   }
-}
 
 Future<void> _initializeServices() async {
   await GetStorage.init();
@@ -238,7 +234,7 @@ class FarahHub extends StatelessWidget {
             _buildTabNavigator(1, () => NoteListScreen(), navController),
             _buildTabNavigator(2, () => LessonScreen(), navController),
             _buildTabNavigator(3, () => const HealthPage(), navController),
-            _buildTabNavigator(4, () => FreeAIToolsPage(), navController),
+            _buildTabNavigator(4, () => ExpenseTrackerPage(), navController), // Replace FreeAIToolsPage
           ],
         ));
   }
