@@ -1,4 +1,4 @@
-// Enhanced Add Expense Dialog with Smart Features
+// Enhanced Add Expense Dialog with Smart Features - FIXED VERSION
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -114,76 +114,120 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = screenWidth > 600 ? 500.0 : screenWidth * 0.9;
+    
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
         opacity: _fadeAnimation,
-        child: AlertDialog(
+        child: Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.purple.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.add, color: Colors.purple.shade700),
+          child: Container(
+            width: maxWidth,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            padding: EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.add, color: Colors.purple.shade700, size: 24),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Add New Expense',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 24),
+                  
+                  // Form Fields
+                  _buildTextField(
+                    controller: _titleController,
+                    label: 'Title',
+                    icon: Icons.title,
+                    required: true,
+                  ),
+                  SizedBox(height: 16),
+                  
+                  _buildTextField(
+                    controller: _descriptionController,
+                    label: 'Description (Optional)',
+                    icon: Icons.description,
+                    maxLines: 2,
+                  ),
+                  SizedBox(height: 16),
+                  
+                  _buildTextField(
+                    controller: _amountController,
+                    label: 'Amount',
+                    icon: Icons.attach_money,
+                    keyboardType: TextInputType.number,
+                    required: true,
+                  ),
+                  SizedBox(height: 20),
+                  
+                  _buildExpenseTypeSelector(),
+                  SizedBox(height: 20),
+                  
+                  _buildCategorySelector(),
+                  SizedBox(height: 20),
+                  
+                  _buildDateSelector(),
+                  SizedBox(height: 24),
+                  
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Get.back(),
+                          child: Text('Cancel'),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _saveExpense,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple.shade700,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: Text('Save Expense'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              SizedBox(width: 12),
-              Text('Add New Expense', style: TextStyle(fontSize: 20)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTextField(
-                  controller: _titleController,
-                  label: 'Title',
-                  icon: Icons.title,
-                  required: true,
-                ),
-                SizedBox(height: 16),
-                _buildTextField(
-                  controller: _descriptionController,
-                  label: 'Description (Optional)',
-                  icon: Icons.description,
-                  maxLines: 2,
-                ),
-                SizedBox(height: 16),
-                _buildTextField(
-                  controller: _amountController,
-                  label: 'Amount',
-                  icon: Icons.attach_money,
-                  keyboardType: TextInputType.number,
-                  required: true,
-                ),
-                SizedBox(height: 16),
-                _buildExpenseTypeSelector(),
-                SizedBox(height: 16),
-                _buildCategorySelector(),
-                SizedBox(height: 16),
-                _buildDateSelector(),
-              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: _saveExpense,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple.shade700,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              child: Text('Save Expense'),
-            ),
-          ],
         ),
       ),
     );
@@ -214,54 +258,74 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
         ),
         filled: true,
         fillColor: Colors.grey.shade50,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }
 
   Widget _buildExpenseTypeSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: RadioListTile<ExpenseType>(
-              title: Row(
-                children: [
-                  Icon(Icons.arrow_circle_down, color: Colors.red, size: 20),
-                  SizedBox(width: 8),
-                  Text('Expense'),
-                ],
-              ),
-              value: ExpenseType.expense,
-              groupValue: _selectedType,
-              onChanged: (ExpenseType? value) {
-                setState(() => _selectedType = value!);
-              },
-              activeColor: Colors.purple.shade700,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Type',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade700,
           ),
-          Expanded(
-            child: RadioListTile<ExpenseType>(
-              title: Row(
-                children: [
-                  Icon(Icons.arrow_circle_up, color: Colors.green, size: 20),
-                  SizedBox(width: 8),
-                  Text('Income'),
-                ],
-              ),
-              value: ExpenseType.income,
-              groupValue: _selectedType,
-              onChanged: (ExpenseType? value) {
-                setState(() => _selectedType = value!);
-              },
-              activeColor: Colors.purple.shade700,
-            ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey.shade50,
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Expanded(
+                child: RadioListTile<ExpenseType>(
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.arrow_circle_down, color: Colors.red, size: 20),
+                      SizedBox(width: 8),
+                      Flexible(child: Text('Expense', style: TextStyle(fontSize: 14))),
+                    ],
+                  ),
+                  value: ExpenseType.expense,
+                  groupValue: _selectedType,
+                  onChanged: (ExpenseType? value) {
+                    setState(() => _selectedType = value!);
+                  },
+                  activeColor: Colors.purple.shade700,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+              Expanded(
+                child: RadioListTile<ExpenseType>(
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.arrow_circle_up, color: Colors.green, size: 20),
+                      SizedBox(width: 8),
+                      Flexible(child: Text('Income', style: TextStyle(fontSize: 14))),
+                    ],
+                  ),
+                  value: ExpenseType.income,
+                  groupValue: _selectedType,
+                  onChanged: (ExpenseType? value) {
+                    setState(() => _selectedType = value!);
+                  },
+                  activeColor: Colors.purple.shade700,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -269,22 +333,31 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Category',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
                 value: _selectedCategory.isEmpty ? null : _selectedCategory,
                 decoration: InputDecoration(
-                  labelText: 'Category',
                   prefixIcon: Icon(Icons.category, color: Colors.purple.shade700),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 items: widget.suggestedCategories.map((String category) {
                   return DropdownMenuItem<String>(
                     value: category,
-                    child: Text(category),
+                    child: Text(category, style: TextStyle(fontSize: 14)),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
@@ -310,7 +383,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
                         ),
                       )
                     : Icon(Icons.auto_awesome, color: Colors.purple.shade700),
-                tooltip: 'Get Smart Category Suggestion',
+                tooltip: 'Get Smart Category',
               ),
             ),
           ],
@@ -320,28 +393,43 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
   }
 
   Widget _buildDateSelector() {
-    return InkWell(
-      onTap: () => _selectDate(context),
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.grey.shade50,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Date',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade700,
+          ),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today, color: Colors.purple.shade700),
-            SizedBox(width: 12),
-            Text(
-              'Date: ${DateFormat('MMM dd, yyyy').format(_selectedDate)}',
-              style: TextStyle(fontSize: 16),
+        SizedBox(height: 8),
+        InkWell(
+          onTap: () => _selectDate(context),
+          child: Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.grey.shade50,
             ),
-            Spacer(),
-            Icon(Icons.arrow_drop_down, color: Colors.grey),
-          ],
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today, color: Colors.purple.shade700),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    DateFormat('MMM dd, yyyy').format(_selectedDate),
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+                Icon(Icons.arrow_drop_down, color: Colors.grey),
+              ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -395,7 +483,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
   }
 }
 
-// Smart Budget Summary Card with Animations
+// Smart Budget Summary Card with Animations - FIXED VERSION
 class SmartBudgetSummaryCard extends StatelessWidget {
   final double totalIncome;
   final double totalExpenses;
@@ -407,6 +495,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
   final VoidCallback onSetBudget;
   final VoidCallback onViewAnalytics;
   final AnimationController animationController;
+  final double screenWidth;
 
   const SmartBudgetSummaryCard({
     Key? key,
@@ -420,6 +509,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
     required this.onSetBudget,
     required this.onViewAnalytics,
     required this.animationController,
+    required this.screenWidth,
   }) : super(key: key);
 
   @override
@@ -444,14 +534,14 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                       : [Colors.purple.shade700, Colors.pink.shade600],
                 ),
               ),
-              padding: EdgeInsets.all(24),
+              padding: EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(),
-                  SizedBox(height: 20),
+                  SizedBox(height: 16),
                   _buildBudgetProgress(),
-                  SizedBox(height: 20),
+                  SizedBox(height: 16),
                   _buildFinancialSummary(),
                   if (budget != null) ...[
                     SizedBox(height: 16),
@@ -461,7 +551,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                     SizedBox(height: 16),
                     _buildInsights(),
                   ],
-                  SizedBox(height: 20),
+                  SizedBox(height: 16),
                   _buildActionButtons(),
                 ],
               ),
@@ -484,10 +574,10 @@ class SmartBudgetSummaryCard extends StatelessWidget {
           child: Icon(
             Icons.account_balance_wallet,
             color: Colors.white,
-            size: 28,
+            size: 24,
           ),
         ),
-        SizedBox(width: 16),
+        SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,7 +586,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                 'Budget Overview',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: screenWidth < 600 ? 18 : 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -507,7 +597,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                     SizedBox(width: 4),
                     Text(
                       'Budget Alert!',
-                      style: TextStyle(color: Colors.yellow, fontSize: 14),
+                      style: TextStyle(color: Colors.yellow, fontSize: 12),
                     ),
                   ],
                 ),
@@ -516,8 +606,8 @@ class SmartBudgetSummaryCard extends StatelessWidget {
         ),
         IconButton(
           onPressed: onViewAnalytics,
-          icon: Icon(Icons.analytics, color: Colors.white),
-          tooltip: 'View Analytics',
+          icon: Icon(Icons.analytics, color: Colors.white, size: 20),
+          tooltip: 'Analytics',
         ),
       ],
     );
@@ -534,13 +624,13 @@ class SmartBudgetSummaryCard extends StatelessWidget {
           children: [
             Text(
               'Budget Usage',
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: Colors.white, fontSize: 14),
             ),
             Text(
               '${budgetUsagePercentage.toStringAsFixed(1)}%',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -572,14 +662,14 @@ class SmartBudgetSummaryCard extends StatelessWidget {
     return Column(
       children: [
         _buildInfoRow('Total Income', totalIncome, Colors.greenAccent, Icons.trending_up),
-        SizedBox(height: 12),
+        SizedBox(height: 8),
         _buildInfoRow('Total Expenses', totalExpenses, Colors.redAccent, Icons.trending_down),
-        SizedBox(height: 12),
+        SizedBox(height: 8),
         Container(
           height: 1,
           color: Colors.white.withOpacity(0.3),
         ),
-        SizedBox(height: 12),
+        SizedBox(height: 8),
         _buildInfoRow(
           'Remaining Budget',
           remainingBudget,
@@ -593,19 +683,19 @@ class SmartBudgetSummaryCard extends StatelessWidget {
   Widget _buildInfoRow(String label, double amount, Color color, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: color, size: 20),
+        Icon(icon, color: color, size: 18),
         SizedBox(width: 8),
         Expanded(
           child: Text(
             label,
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: Colors.white, fontSize: 14),
           ),
         ),
         Text(
           '\${amount.toStringAsFixed(2)}',
           style: TextStyle(
             color: color,
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -629,32 +719,45 @@ class SmartBudgetSummaryCard extends StatelessWidget {
             budget!.name,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 4,
             children: [
-              Icon(Icons.timeline, color: Colors.white70, size: 16),
-              SizedBox(width: 4),
-              Text(
-                budget!.period.toString().split('.').last.capitalizeFirst!,
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.timeline, color: Colors.white70, size: 14),
+                  SizedBox(width: 4),
+                  Text(
+                    budget!.period.toString().split('.').last.capitalizeFirst!,
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
               ),
-              SizedBox(width: 16),
-              Icon(Icons.attach_money, color: Colors.white70, size: 16),
-              SizedBox(width: 4),
-              Text(
-                '\${budget!.amount.toStringAsFixed(2)}',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.attach_money, color: Colors.white70, size: 14),
+                  SizedBox(width: 4),
+                  Text(
+                    '\${budget!.amount.toStringAsFixed(0)}',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
               ),
             ],
           ),
           SizedBox(height: 4),
           Text(
-            '${DateFormat('MMM dd').format(budget!.startDate)} - ${DateFormat('MMM dd, yyyy').format(budget!.endDate)}',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            '${DateFormat('MMM dd').format(budget!.startDate)} - ${DateFormat('MMM dd').format(budget!.endDate)}',
+            style: TextStyle(color: Colors.white70, fontSize: 11),
           ),
         ],
       ),
@@ -673,13 +776,13 @@ class SmartBudgetSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb, color: Colors.yellow, size: 18),
+              Icon(Icons.lightbulb, color: Colors.yellow, size: 16),
               SizedBox(width: 8),
               Text(
                 'Smart Insights',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -698,13 +801,15 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                       color: insight.type == InsightType.warning
                           ? Colors.orange
                           : Colors.lightBlue,
-                      size: 16,
+                      size: 14,
                     ),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         insight.title,
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontSize: 11),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -716,36 +821,70 @@ class SmartBudgetSummaryCard extends StatelessWidget {
   }
 
   Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: onSetBudget,
-            icon: Icon(Icons.edit),
-            label: Text(budget == null ? 'Set Budget' : 'Edit Budget'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.purple.shade700,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: onViewAnalytics,
-            icon: Icon(Icons.bar_chart),
-            label: Text('Analytics'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.2),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
-        ),
-      ],
-    );
+    return screenWidth < 400 
+        ? Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onSetBudget,
+                  icon: Icon(Icons.edit, size: 18),
+                  label: Text(budget == null ? 'Set Budget' : 'Edit Budget'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.purple.shade700,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onViewAnalytics,
+                  icon: Icon(Icons.bar_chart, size: 18),
+                  label: Text('Analytics'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onSetBudget,
+                  icon: Icon(Icons.edit, size: 18),
+                  label: Text(budget == null ? 'Set Budget' : 'Edit Budget'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.purple.shade700,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onViewAnalytics,
+                  icon: Icon(Icons.bar_chart, size: 18),
+                  label: Text('Analytics'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          );
+    }
   }
-}

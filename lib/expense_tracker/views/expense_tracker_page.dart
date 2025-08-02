@@ -13,18 +13,31 @@ class ExpenseTrackerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.grey.shade100,
       extendBodyBehindAppBar: true,
       appBar: _buildModernAppBar(context),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Budget Summary with enhanced animations
-            Obx(() => AnimatedContainer(
-              duration: Duration(milliseconds: 500),
-              curve: Curves.easeOutCubic,
-              child: SmartBudgetSummaryCard(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.purple.shade700,
+              Colors.pink.shade600,
+              Colors.orange.shade400,
+            ],
+            stops: [0.0, 0.6, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Budget Summary with enhanced animations
+              Obx(() => SmartBudgetSummaryCard(
                 totalIncome: expenseController.totalIncome.value,
                 totalExpenses: expenseController.totalExpenses.value,
                 remainingBudget: expenseController.remainingBudget.value,
@@ -35,57 +48,64 @@ class ExpenseTrackerPage extends StatelessWidget {
                 onSetBudget: () => _showSmartBudgetDialog(context),
                 onViewAnalytics: () => _showAnalyticsSheet(context),
                 animationController: expenseController.budgetProgressController,
-              ),
-            )),
-            
-            // Smart Filters Bar
-            Obx(() => SmartFiltersBar(
-              selectedTimeFilter: expenseController.selectedTimeFilter.value,
-              selectedCategoryFilter: expenseController.selectedCategoryFilter.value,
-              availableCategories: expenseController.suggestedCategories,
-              onTimeFilterChanged: expenseController.setTimeFilter,
-              onCategoryFilterChanged: expenseController.setCategoryFilter,
-            )),
-            
-            // Enhanced Expense List with animations
-            Expanded(
-              child: Obx(() {
-                if (expenseController.isLoading.value) {
-                  return _buildLoadingState();
-                }
-                
-                if (expenseController.filteredExpenses.isEmpty) {
-                  return _buildEmptyState(context);
-                }
-                
-                return AnimationLimiter(
-                  child: ListView.builder(
-                    physics: BouncingScrollPhysics(),
-                    padding: EdgeInsets.only(bottom: 100),
-                    itemCount: expenseController.filteredExpenses.length,
-                    itemBuilder: (context, index) {
-                      final expense = expenseController.filteredExpenses[index];
-                      return AnimationConfiguration.staggeredList(
-                        position: index,
-                        duration: Duration(milliseconds: 375),
-                        child: SlideAnimation(
-                          verticalOffset: 50.0,
-                          child: FadeInAnimation(
-                            child: AnimatedExpenseListItem(
-                              expense: expense,
-                              onDelete: () => _confirmDelete(context, expense),
-                              onTap: () => _showExpenseDetails(context, expense),
-                              animationDelay: Duration(milliseconds: index * 100),
+                screenWidth: screenWidth,
+              )),
+              // Smart Filters Bar
+              Obx(() => SmartFiltersBar(
+                selectedTimeFilter: expenseController.selectedTimeFilter.value,
+                selectedCategoryFilter: expenseController.selectedCategoryFilter.value,
+                availableCategories: expenseController.suggestedCategories,
+                onTimeFilterChanged: expenseController.setTimeFilter,
+                onCategoryFilterChanged: expenseController.setCategoryFilter,
+                screenWidth: screenWidth,
+              )),
+              
+              // Enhanced Expense List with animations
+              Expanded(
+                child: Obx(() {
+                  if (expenseController.isLoading.value) {
+                    return _buildLoadingState();
+                  }
+                  
+                  if (expenseController.filteredExpenses.isEmpty) {
+                    return _buildEmptyState(context, screenWidth);
+                  }
+                  
+                  return AnimationLimiter(
+                    child: ListView.builder(
+                      physics: BouncingScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        bottom: 100,
+                        left: 8,
+                        right: 8,
+                        top: 8,
+                      ),
+                      itemCount: expenseController.filteredExpenses.length,
+                      itemBuilder: (context, index) {
+                        final expense = expenseController.filteredExpenses[index];
+                        return AnimationConfiguration.staggeredList(
+                          position: index,
+                          duration: Duration(milliseconds: 375),
+                          child: SlideAnimation(
+                            verticalOffset: 50.0,
+                            child: FadeInAnimation(
+                              child: AnimatedExpenseListItem(
+                                expense: expense,
+                                onDelete: () => _confirmDelete(context, expense),
+                                onTap: () => _showExpenseDetails(context, expense),
+                                animationDelay: Duration(milliseconds: index * 100),
+                                screenWidth: screenWidth,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }),
-            ),
-          ],
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionMenu(
@@ -104,7 +124,7 @@ class ExpenseTrackerPage extends StatelessWidget {
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 22,
         ),
       ),
       backgroundColor: Colors.transparent,
@@ -125,7 +145,7 @@ class ExpenseTrackerPage extends StatelessWidget {
         IconButton(
           icon: Icon(Icons.analytics_outlined, color: Colors.white),
           onPressed: () => _showAnalyticsSheet(context),
-          tooltip: 'View Analytics',
+          tooltip: 'Analytics',
         ),
         IconButton(
           icon: Icon(Icons.refresh_rounded, color: Colors.white),
@@ -136,29 +156,42 @@ class ExpenseTrackerPage extends StatelessWidget {
           icon: Icon(Icons.more_vert, color: Colors.white),
           onSelected: (value) => _handleMenuSelection(context, value),
           itemBuilder: (context) => [
-            PopupMenuItem(value: 'export', child: Row(children: [Icon(Icons.download), SizedBox(width: 8), Text('Export Data')])),
-            PopupMenuItem(value: 'settings', child: Row(children: [Icon(Icons.settings), SizedBox(width: 8), Text('Settings')])),
-            PopupMenuItem(value: 'clear', child: Row(children: [Icon(Icons.delete_forever, color: Colors.red), SizedBox(width: 8), Text('Clear All Data', style: TextStyle(color: Colors.red))])),
+            PopupMenuItem(
+              value: 'export',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.download, size: 20),
+                  SizedBox(width: 8),
+                  Text('Export', style: TextStyle(fontSize: 14)),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'settings',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.settings, size: 20),
+                  SizedBox(width: 8),
+                  Text('Settings', style: TextStyle(fontSize: 14)),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'clear',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.delete_forever, color: Colors.red, size: 20),
+                  SizedBox(width: 8),
+                  Text('Clear All', style: TextStyle(color: Colors.red, fontSize: 14)),
+                ],
+              ),
+            ),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _getBackgroundGradient(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.purple.shade700,
-            Colors.pink.shade600,
-            Colors.orange.shade400,
-          ],
-          stops: [0.0, 0.6, 1.0],
-        ),
-      ),
     );
   }
 
@@ -173,69 +206,84 @@ class ExpenseTrackerPage extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Text(
-            'Loading your expenses...',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            'Loading expenses...',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, double screenWidth) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 80,
-            color: Colors.white54,
-          ),
-          SizedBox(height: 24),
-          Text(
-            'No expenses yet',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: screenWidth * 0.2,
+              color: Colors.white54,
             ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Start tracking your expenses or scan a receipt',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () => _showEnhancedAddExpenseDialog(context),
-                icon: Icon(Icons.add),
-                label: Text('Add Expense'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.purple.shade700,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
+            SizedBox(height: 24),
+            Text(
+              'No expenses yet',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: screenWidth * 0.06,
+                fontWeight: FontWeight.bold,
               ),
-              SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () => _handleReceiptScan(context),
-                icon: Icon(Icons.camera_alt),
-                label: Text('Scan Receipt'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink.shade600,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Start tracking your expenses\nor scan a receipt',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: screenWidth * 0.04,
               ),
-            ],
-          ),
-        ],
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 32),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _showEnhancedAddExpenseDialog(context),
+                  icon: Icon(Icons.add, size: 20),
+                  label: Text('Add Expense'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.purple.shade700,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _handleReceiptScan(context),
+                  icon: Icon(Icons.camera_alt, size: 20),
+                  label: Text('Scan Receipt'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pink.shade600,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -266,32 +314,78 @@ class ExpenseTrackerPage extends StatelessWidget {
   }
 
   Future<void> _handleReceiptScan(BuildContext context) async {
-    final receiptData = await expenseController.scanReceipt();
-    
-    if (receiptData != null) {
-      // Pre-fill the add expense dialog with scanned data
+    try {
+      // Show loading indicator
       Get.dialog(
-        EnhancedAddExpenseDialog(
-          suggestedCategories: expenseController.suggestedCategories,
-          prefilledData: receiptData,
-          onSave: (title, description, amount, type, category, date) {
-            expenseController.addExpense(
-              Expense(
-                title: title,
-                description: description,
-                amount: amount,
-                type: type,
-                category: category,
-                date: date,
-                createdAt: DateTime.now(),
+        Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Opening camera...'),
+                ],
               ),
-            );
-            Get.back();
-          },
-          onGetSmartCategory: (title, description) => 
-              expenseController.getSmartCategory(title, description),
+            ),
+          ),
         ),
         barrierDismissible: false,
+      );
+
+      final receiptData = await expenseController.scanReceipt();
+      
+      // Close loading dialog
+      Get.back();
+      
+      if (receiptData != null) {
+        // Pre-fill the add expense dialog with scanned data
+        Get.dialog(
+          EnhancedAddExpenseDialog(
+            suggestedCategories: expenseController.suggestedCategories,
+            prefilledData: receiptData,
+            onSave: (title, description, amount, type, category, date) {
+              expenseController.addExpense(
+                Expense(
+                  title: title,
+                  description: description,
+                  amount: amount,
+                  type: type,
+                  category: category,
+                  date: date,
+                  createdAt: DateTime.now(),
+                ),
+              );
+              Get.back();
+            },
+            onGetSmartCategory: (title, description) => 
+                expenseController.getSmartCategory(title, description),
+          ),
+          barrierDismissible: false,
+        );
+      } else {
+        Get.snackbar(
+          'Scan Failed',
+          'Could not scan receipt. Please try again or add expense manually.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+      
+      Get.snackbar(
+        'Error',
+        'Failed to open camera: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     }
   }
@@ -309,96 +403,125 @@ class ExpenseTrackerPage extends StatelessWidget {
     }
 
     Get.dialog(
-      AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.account_balance_wallet, color: Colors.purple.shade700),
-            SizedBox(width: 8),
-            Text('Smart Budget Setup'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: budgetNameController,
-                decoration: InputDecoration(
-                  labelText: 'Budget Name',
-                  prefixIcon: Icon(Icons.label_outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 400),
+          padding: EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.account_balance_wallet, color: Colors.purple.shade700),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Smart Budget Setup',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: budgetAmountController,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  prefixIcon: Icon(Icons.attach_money),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                SizedBox(height: 20),
+                TextField(
+                  controller: budgetNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Budget Name',
+                    prefixIcon: Icon(Icons.label_outline),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
                 ),
-                keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 16),
-              Obx(() => DropdownButtonFormField<BudgetPeriod>(
-                value: selectedPeriod.value,
-                decoration: InputDecoration(
-                  labelText: 'Budget Period',
-                  prefixIcon: Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                SizedBox(height: 16),
+                TextField(
+                  controller: budgetAmountController,
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    prefixIcon: Icon(Icons.attach_money),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  keyboardType: TextInputType.number,
                 ),
-                onChanged: (BudgetPeriod? newValue) {
-                  if (newValue != null) {
-                    selectedPeriod.value = newValue;
-                  }
-                },
-                items: BudgetPeriod.values.map((BudgetPeriod period) {
-                  return DropdownMenuItem<BudgetPeriod>(
-                    value: period,
-                    child: Text(period.toString().split('.').last.capitalizeFirst!),
-                  );
-                }).toList(),
-              )),
-              SizedBox(height: 16),
-              Obx(() => SwitchListTile(
-                title: Text('Use AI Recommendations'),
-                subtitle: Text('Get budget suggestions based on your spending history'),
-                value: useAIRecommendations.value,
-                onChanged: (value) => useAIRecommendations.value = value,
-                activeColor: Colors.purple.shade700,
-              )),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = budgetNameController.text;
-              final amount = double.tryParse(budgetAmountController.text) ?? 0.0;
-              if (name.isNotEmpty && amount > 0) {
-                expenseController.createSmartBudget(
-                  name: name,
-                  amount: amount,
-                  period: selectedPeriod.value,
-                  useAIRecommendations: useAIRecommendations.value,
-                );
-                Get.back();
-              } else {
-                Get.snackbar('Error', 'Please enter valid budget details');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple.shade700,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                SizedBox(height: 16),
+                Obx(() => DropdownButtonFormField<BudgetPeriod>(
+                  value: selectedPeriod.value,
+                  decoration: InputDecoration(
+                    labelText: 'Budget Period',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onChanged: (BudgetPeriod? newValue) {
+                    if (newValue != null) {
+                      selectedPeriod.value = newValue;
+                    }
+                  },
+                  items: BudgetPeriod.values.map((BudgetPeriod period) {
+                    return DropdownMenuItem<BudgetPeriod>(
+                      value: period,
+                      child: Text(period.toString().split('.').last.capitalizeFirst!),
+                    );
+                  }).toList(),
+                )),
+                SizedBox(height: 16),
+                Obx(() => SwitchListTile(
+                  title: Text('Use AI Recommendations'),
+                  subtitle: Text(
+                    'Get budget suggestions based on spending history',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: useAIRecommendations.value,
+                  onChanged: (value) => useAIRecommendations.value = value,
+                  activeColor: Colors.purple.shade700,
+                  contentPadding: EdgeInsets.zero,
+                )),
+                SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text('Cancel'),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final name = budgetNameController.text;
+                          final amount = double.tryParse(budgetAmountController.text) ?? 0.0;
+                          if (name.isNotEmpty && amount > 0) {
+                            expenseController.createSmartBudget(
+                              name: name,
+                              amount: amount,
+                              period: selectedPeriod.value,
+                              useAIRecommendations: useAIRecommendations.value,
+                            );
+                            Get.back();
+                          } else {
+                            Get.snackbar('Error', 'Please enter valid budget details');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple.shade700,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('Create'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            child: Text('Create Budget'),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -419,11 +542,17 @@ class ExpenseTrackerPage extends StatelessWidget {
   void _confirmDelete(BuildContext context, Expense expense) {
     Get.dialog(
       AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange),
             SizedBox(width: 8),
-            Text('Delete Expense'),
+            Expanded(
+              child: Text(
+                'Delete Expense',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
           ],
         ),
         content: Text('Are you sure you want to delete "${expense.title}"?'),
@@ -451,91 +580,151 @@ class ExpenseTrackerPage extends StatelessWidget {
   void _showExpenseDetails(BuildContext context, Expense expense) {
     Get.bottomSheet(
       Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  expense.type == ExpenseType.income 
-                      ? Icons.arrow_circle_up 
-                      : Icons.arrow_circle_down,
-                  color: expense.type == ExpenseType.income 
-                      ? Colors.green 
-                      : Colors.red,
-                  size: 32,
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    expense.title,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: expense.type == ExpenseType.income 
+                          ? Colors.green.shade100
+                          : Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      expense.type == ExpenseType.income 
+                          ? Icons.arrow_circle_up 
+                          : Icons.arrow_circle_down,
+                      color: expense.type == ExpenseType.income 
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                      size: 28,
+                    ),
                   ),
-                ),
-                Text(
-                  '\${expense.amount.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: expense.type == ExpenseType.income 
-                        ? Colors.green 
-                        : Colors.red,
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          expense.title,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '\$${expense.amount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: expense.type == ExpenseType.income 
+                                ? Colors.green.shade700
+                                : Colors.red.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
+              ),
+              SizedBox(height: 20),
+              if (expense.description.isNotEmpty) ...[
+                Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
+                SizedBox(height: 4),
+                Text(expense.description),
+                SizedBox(height: 16),
               ],
-            ),
-            SizedBox(height: 16),
-            if (expense.description.isNotEmpty) ...[
-              Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(expense.description),
-              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Category:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(height: 4),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            expense.category,
+                            style: TextStyle(
+                              color: Colors.purple.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Date:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(height: 4),
+                        Text(DateFormat('MMM dd, yyyy').format(expense.date)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Get.back();
+                        // TODO: Implement edit functionality
+                      },
+                      icon: Icon(Icons.edit, size: 20),
+                      label: Text('Edit'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple.shade700,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Get.back();
+                        _confirmDelete(context, expense);
+                      },
+                      icon: Icon(Icons.delete, size: 20),
+                      label: Text('Delete'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
-            Text('Category:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(expense.category),
-            SizedBox(height: 12),
-            Text('Date:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(DateFormat('MMM dd, yyyy').format(expense.date)),
-            SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Get.back();
-                      // TODO: Implement edit functionality
-                    },
-                    icon: Icon(Icons.edit),
-                    label: Text('Edit'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple.shade700,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Get.back();
-                      _confirmDelete(context, expense);
-                    },
-                    icon: Icon(Icons.delete),
-                    label: Text('Delete'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -544,12 +733,10 @@ class ExpenseTrackerPage extends StatelessWidget {
   void _handleMenuSelection(BuildContext context, String value) {
     switch (value) {
       case 'export':
-        // TODO: Implement data export
-        Get.snackbar('Feature Coming Soon', 'Data export will be available in the next update');
+        Get.snackbar('Coming Soon', 'Data export will be available soon');
         break;
       case 'settings':
-        // TODO: Navigate to settings page
-        Get.snackbar('Feature Coming Soon', 'Settings page will be available in the next update');
+        Get.snackbar('Coming Soon', 'Settings page will be available soon');
         break;
       case 'clear':
         _confirmClearAllData(context);
@@ -560,16 +747,22 @@ class ExpenseTrackerPage extends StatelessWidget {
   void _confirmClearAllData(BuildContext context) {
     Get.dialog(
       AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.red),
             SizedBox(width: 8),
-            Text('Clear All Data'),
+            Expanded(
+              child: Text(
+                'Clear All Data',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
           ],
         ),
         content: Text(
           'Are you sure you want to delete all expenses and budgets? This action cannot be undone.',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 14),
         ),
         actions: [
           TextButton(

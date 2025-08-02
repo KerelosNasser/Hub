@@ -71,57 +71,96 @@ class _FloatingActionMenuState extends State<FloatingActionMenu>
             ),
           ),
 
-        // Menu items
+        // Menu items and labels
         AnimatedBuilder(
           animation: _menuAnimation,
           builder: (context, child) {
             return Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Scan Receipt Button
-                Transform.translate(
-                  offset: Offset(0, -80 * _menuAnimation.value),
-                  child: Transform.scale(
-                    scale: _menuAnimation.value,
-                    child: FloatingActionButton(
-                      heroTag: "scan",
-                      onPressed: _isMenuOpen ? () {
-                        _toggleMenu();
-                        widget.onScanReceipt();
-                      } : null,
-                      backgroundColor: Colors.orange.shade600,
-                      child: Obx(() => widget.isProcessing.value
-                          ? SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Icon(Icons.camera_alt, color: Colors.white)),
+                // Scan Receipt Button with Label
+                if (_isMenuOpen)
+                  Transform.translate(
+                    offset: Offset(0, -80 * _menuAnimation.value),
+                    child: Transform.scale(
+                      scale: _menuAnimation.value,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Scan Receipt',
+                              style: TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          FloatingActionButton(
+                            heroTag: "scan",
+                            onPressed: () {
+                              _toggleMenu();
+                              widget.onScanReceipt();
+                            },
+                            backgroundColor: Colors.orange.shade600,
+                            child: Obx(() => widget.isProcessing.value
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Icon(Icons.camera_alt, color: Colors.white)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 16),
 
-                // Add Expense Button
-                Transform.translate(
-                  offset: Offset(0, -40 * _menuAnimation.value),
-                  child: Transform.scale(
-                    scale: _menuAnimation.value,
-                    child: FloatingActionButton(
-                      heroTag: "add",
-                      onPressed: _isMenuOpen ? () {
-                        _toggleMenu();
-                        widget.onAddExpense();
-                      } : null,
-                      backgroundColor: Colors.green.shade600,
-                      child: Icon(Icons.add, color: Colors.white),
+                if (_isMenuOpen) SizedBox(height: 16),
+
+                // Add Expense Button with Label
+                if (_isMenuOpen)
+                  Transform.translate(
+                    offset: Offset(0, -40 * _menuAnimation.value),
+                    child: Transform.scale(
+                      scale: _menuAnimation.value,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Add Expense',
+                              style: TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          FloatingActionButton(
+                            heroTag: "add",
+                            onPressed: () {
+                              _toggleMenu();
+                              widget.onAddExpense();
+                            },
+                            backgroundColor: Colors.green.shade600,
+                            child: Icon(Icons.add, color: Colors.white),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 16),
+
+                if (_isMenuOpen) SizedBox(height: 16),
 
                 // Main FAB
                 FloatingActionButton(
@@ -138,59 +177,6 @@ class _FloatingActionMenuState extends State<FloatingActionMenu>
             );
           },
         ),
-
-        // Labels for menu items
-        if (_isMenuOpen)
-          AnimatedBuilder(
-            animation: _menuAnimation,
-            builder: (context, child) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Scan Receipt Label
-                  Transform.translate(
-                    offset: Offset(-80, -80 * _menuAnimation.value),
-                    child: Transform.scale(
-                      scale: _menuAnimation.value,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Scan Receipt',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-
-                  // Add Expense Label
-                  Transform.translate(
-                    offset: Offset(-80, -40 * _menuAnimation.value),
-                    child: Transform.scale(
-                      scale: _menuAnimation.value,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Add Expense',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 72), // Account for main FAB
-                ],
-              );
-            },
-          ),
       ],
     );
   }
@@ -202,13 +188,14 @@ class _FloatingActionMenuState extends State<FloatingActionMenu>
   }
 }
 
-// Smart Filters Bar
+// Smart Filters Bar - FIXED VERSION
 class SmartFiltersBar extends StatelessWidget {
   final String selectedTimeFilter;
   final String selectedCategoryFilter;
   final List<String> availableCategories;
   final Function(String) onTimeFilterChanged;
   final Function(String) onCategoryFilterChanged;
+  final double screenWidth;
 
   const SmartFiltersBar({
     Key? key,
@@ -217,36 +204,56 @@ class SmartFiltersBar extends StatelessWidget {
     required this.availableCategories,
     required this.onTimeFilterChanged,
     required this.onCategoryFilterChanged,
+    required this.screenWidth,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildFilterDropdown(
-              'Time',
-              selectedTimeFilter,
-              ['All', 'Today', 'This Week', 'This Month', 'Last 3 Months'],
-              onTimeFilterChanged,
-              Icons.access_time,
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: screenWidth < 400
+          ? Column(
+              children: [
+                _buildFilterDropdown(
+                  'Time',
+                  selectedTimeFilter,
+                  ['All', 'Today', 'This Week', 'This Month', 'Last 3 Months'],
+                  onTimeFilterChanged,
+                  Icons.access_time,
+                ),
+                SizedBox(height: 8),
+                _buildFilterDropdown(
+                  'Category',
+                  selectedCategoryFilter,
+                  ['All', ...availableCategories],
+                  onCategoryFilterChanged,
+                  Icons.category,
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: _buildFilterDropdown(
+                    'Time',
+                    selectedTimeFilter,
+                    ['All', 'Today', 'This Week', 'This Month', 'Last 3 Months'],
+                    onTimeFilterChanged,
+                    Icons.access_time,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: _buildFilterDropdown(
+                    'Category',
+                    selectedCategoryFilter,
+                    ['All', ...availableCategories],
+                    onCategoryFilterChanged,
+                    Icons.category,
+                  ),
+                ),
+              ],
             ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: _buildFilterDropdown(
-              'Category',
-              selectedCategoryFilter,
-              ['All', ...availableCategories],
-              onCategoryFilterChanged,
-              Icons.category,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -258,7 +265,7 @@ class SmartFiltersBar extends StatelessWidget {
     IconData icon,
   ) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(25),
@@ -273,8 +280,9 @@ class SmartFiltersBar extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: selectedValue,
-          icon: Icon(Icons.arrow_drop_down, color: Colors.purple.shade700),
+          icon: Icon(Icons.arrow_drop_down, color: Colors.purple.shade700, size: 20),
           style: TextStyle(color: Colors.purple.shade700, fontSize: 14),
+          isExpanded: true,
           onChanged: (String? newValue) {
             if (newValue != null) onChanged(newValue);
           },
@@ -286,7 +294,13 @@ class SmartFiltersBar extends StatelessWidget {
                 children: [
                   Icon(icon, size: 16, color: Colors.purple.shade700),
                   SizedBox(width: 8),
-                  Text(value),
+                  Expanded(
+                    child: Text(
+                      value,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -297,12 +311,13 @@ class SmartFiltersBar extends StatelessWidget {
   }
 }
 
-// Animated Expense List Item
+// Animated Expense List Item - FIXED VERSION
 class AnimatedExpenseListItem extends StatefulWidget {
   final Expense expense;
   final VoidCallback onDelete;
   final VoidCallback onTap;
   final Duration animationDelay;
+  final double screenWidth;
 
   const AnimatedExpenseListItem({
     Key? key,
@@ -310,6 +325,7 @@ class AnimatedExpenseListItem extends StatefulWidget {
     required this.onDelete,
     required this.onTap,
     required this.animationDelay,
+    required this.screenWidth,
   }) : super(key: key);
 
   @override
@@ -348,6 +364,8 @@ class _AnimatedExpenseListItemState extends State<AnimatedExpenseListItem>
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = widget.screenWidth < 400;
+
     return SlideTransition(
       position: _slideAnimation,
       child: ScaleTransition(
@@ -355,118 +373,244 @@ class _AnimatedExpenseListItemState extends State<AnimatedExpenseListItem>
         child: GestureDetector(
           onTap: widget.onTap,
           child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Card(
-              elevation: 8,
-              shadowColor: Colors.black26,
+              elevation: 4,
+              shadowColor: Colors.black12,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
                     colors: [
                       Colors.white,
                       Colors.grey.shade50,
                     ],
                   ),
                 ),
-                child: ListTile(
-                  contentPadding: EdgeInsets.all(16),
-                  leading: Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: widget.expense.type == ExpenseType.income
-                          ? Colors.green.shade100
-                          : Colors.red.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      widget.expense.type == ExpenseType.income
-                          ? Icons.arrow_circle_up
-                          : Icons.arrow_circle_down,
-                      color: widget.expense.type == ExpenseType.income
-                          ? Colors.green.shade700
-                          : Colors.red.shade700,
-                      size: 24,
-                    ),
-                  ),
-                  title: Text(
-                    widget.expense.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.expense.description.isNotEmpty)
-                        Text(
-                          widget.expense.description,
-                          style: TextStyle(color: Colors.grey.shade600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.purple.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              widget.expense.category,
-                              style: TextStyle(
-                                color: Colors.purple.shade700,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            DateFormat('MMM dd').format(widget.expense.date),
-                            style: TextStyle(
-                              color: Colors.grey.shade500,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '\${widget.expense.amount.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: widget.expense.type == ExpenseType.income
-                              ? Colors.green.shade700
-                              : Colors.red.shade700,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete_outline, color: Colors.grey.shade600),
-                        onPressed: widget.onDelete,
-                        iconSize: 20,
-                      ),
-                    ],
-                  ),
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: isSmallScreen
+                      ? _buildCompactLayout()
+                      : _buildExpandedLayout(),
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCompactLayout() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: widget.expense.type == ExpenseType.income
+                    ? Colors.green.shade100
+                    : Colors.red.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                widget.expense.type == ExpenseType.income
+                    ? Icons.arrow_circle_up
+                    : Icons.arrow_circle_down,
+                color: widget.expense.type == ExpenseType.income
+                    ? Colors.green.shade700
+                    : Colors.red.shade700,
+                size: 20,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.expense.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.grey.shade800,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    '\${widget.expense.amount.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: widget.expense.type == ExpenseType.income
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: Colors.grey.shade600, size: 20),
+              onPressed: widget.onDelete,
+              constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.all(4),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        if (widget.expense.description.isNotEmpty) ...[
+          Text(
+            widget.expense.description,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 8),
+        ],
+        Row(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.purple.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                widget.expense.category,
+                style: TextStyle(
+                  color: Colors.purple.shade700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            SizedBox(width: 8),
+            Text(
+              DateFormat('MMM dd').format(widget.expense.date),
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandedLayout() {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: widget.expense.type == ExpenseType.income
+                ? Colors.green.shade100
+                : Colors.red.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            widget.expense.type == ExpenseType.income
+                ? Icons.arrow_circle_up
+                : Icons.arrow_circle_down,
+            color: widget.expense.type == ExpenseType.income
+                ? Colors.green.shade700
+                : Colors.red.shade700,
+            size: 24,
+          ),
+        ),
+        SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.expense.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.grey.shade800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (widget.expense.description.isNotEmpty) ...[
+                SizedBox(height: 4),
+                Text(
+                  widget.expense.description,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      widget.expense.category,
+                      style: TextStyle(
+                        color: Colors.purple.shade700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    DateFormat('MMM dd').format(widget.expense.date),
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '\${widget.expense.amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                color: widget.expense.type == ExpenseType.income
+                    ? Colors.green.shade700
+                    : Colors.red.shade700,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: Colors.grey.shade600),
+              onPressed: widget.onDelete,
+              iconSize: 20,
+              constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.all(4),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
