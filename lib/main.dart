@@ -12,8 +12,8 @@ import 'package:farahs_hub/widgets/NavBar_main.dart';
 import 'daily_lessons/LessonPage.dart';
 import 'mainScreen/FarahHub_screen.dart';
 import 'mainScreen/controller.dart';
-import 'notes/views/note_list_screen.dart'; // Using modular structure
-import 'notes/views/note_edit_screen.dart'; // Using modular structure
+import 'notes/views/note_list_screen.dart';
+import 'notes/views/note_edit_screen.dart'; 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'daily_lessons/lessons_model.dart';
 import 'package:farahs_hub/health/health_notification_service.dart';

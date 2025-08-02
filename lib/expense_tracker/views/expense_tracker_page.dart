@@ -19,7 +19,6 @@ class ExpenseTrackerPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       extendBodyBehindAppBar: true,
-      appBar: _buildModernAppBar(context),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -117,83 +116,6 @@ class ExpenseTrackerPage extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildModernAppBar(BuildContext context) {
-    return AppBar(
-      title: Text(
-        'SmartExpense',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
-        ),
-      ),
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.purple.shade700.withOpacity(0.9),
-              Colors.pink.shade600.withOpacity(0.9),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.analytics_outlined, color: Colors.white),
-          onPressed: () => _showAnalyticsSheet(context),
-          tooltip: 'Analytics',
-        ),
-        IconButton(
-          icon: Icon(Icons.refresh_rounded, color: Colors.white),
-          onPressed: () => expenseController.loadExpenses(),
-          tooltip: 'Refresh',
-        ),
-        PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: Colors.white),
-          onSelected: (value) => _handleMenuSelection(context, value),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'export',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.download, size: 20),
-                  SizedBox(width: 8),
-                  Text('Export', style: TextStyle(fontSize: 14)),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'settings',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.settings, size: 20),
-                  SizedBox(width: 8),
-                  Text('Settings', style: TextStyle(fontSize: 14)),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'clear',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.delete_forever, color: Colors.red, size: 20),
-                  SizedBox(width: 8),
-                  Text('Clear All', style: TextStyle(color: Colors.red, fontSize: 14)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
   Widget _buildLoadingState() {
     return Center(
