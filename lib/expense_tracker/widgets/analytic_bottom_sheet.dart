@@ -154,7 +154,7 @@ class ExpenseAnalyticsSheet extends StatelessWidget {
               Icon(icon, color: color, size: 20),
               Spacer(),
               Text(
-                '\${amount.toStringAsFixed(2)}',
+                amount.toStringAsFixed(2),
                 style: TextStyle(
                   color: color,
                   fontSize: 18,

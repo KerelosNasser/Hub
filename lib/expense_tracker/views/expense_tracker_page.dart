@@ -25,9 +25,9 @@ class ExpenseTrackerPage extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.purple.shade700,
+              Colors.pink.shade800,
               Colors.pink.shade600,
-              Colors.orange.shade400,
+              Colors.pink.shade400,
             ],
             stops: [0.0, 0.6, 1.0],
           ),
@@ -182,7 +182,7 @@ class ExpenseTrackerPage extends StatelessWidget {
                   label: Text('Add Expense'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: Colors.purple.shade700,
+                    foregroundColor: Colors.pink.shade800,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
@@ -336,7 +336,7 @@ class ExpenseTrackerPage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.account_balance_wallet, color: Colors.purple.shade700),
+                    Icon(Icons.account_balance_wallet, color: Colors.pink.shade800),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -400,7 +400,7 @@ class ExpenseTrackerPage extends StatelessWidget {
                   ),
                   value: useAIRecommendations.value,
                   onChanged: (value) => useAIRecommendations.value = value,
-                  activeColor: Colors.purple.shade700,
+                  activeColor: Colors.pink.shade800,
                   contentPadding: EdgeInsets.zero,
                 )),
                 SizedBox(height: 20),
@@ -431,7 +431,7 @@ class ExpenseTrackerPage extends StatelessWidget {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple.shade700,
+                          backgroundColor: Colors.pink.shade800,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -582,13 +582,13 @@ class ExpenseTrackerPage extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.purple.shade100,
+                            color: Colors.pink.shade100,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             expense.category,
                             style: TextStyle(
-                              color: Colors.purple.shade700,
+                              color: Colors.pink.shade800,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -621,7 +621,7 @@ class ExpenseTrackerPage extends StatelessWidget {
                       icon: Icon(Icons.edit, size: 20),
                       label: Text('Edit'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple.shade700,
+                        backgroundColor: Colors.pink.shade800,
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -648,61 +648,6 @@ class ExpenseTrackerPage extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _handleMenuSelection(BuildContext context, String value) {
-    switch (value) {
-      case 'export':
-        Get.snackbar('Coming Soon', 'Data export will be available soon');
-        break;
-      case 'settings':
-        Get.snackbar('Coming Soon', 'Settings page will be available soon');
-        break;
-      case 'clear':
-        _confirmClearAllData(context);
-        break;
-    }
-  }
-
-  void _confirmClearAllData(BuildContext context) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Clear All Data',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to delete all expenses and budgets? This action cannot be undone.',
-          style: TextStyle(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              expenseController.clearAllData();
-              Get.back();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Clear All'),
-          ),
-        ],
       ),
     );
   }

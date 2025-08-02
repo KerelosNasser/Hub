@@ -140,10 +140,10 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
                       Container(
                         padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.purple.shade100,
+                          color: Colors.pink.shade100,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(Icons.add, color: Colors.purple.shade700, size: 24),
+                        child: Icon(Icons.add, color: Colors.pink.shade800, size: 24),
                       ),
                       SizedBox(width: 12),
                       Expanded(
@@ -212,7 +212,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
                         child: ElevatedButton(
                           onPressed: _saveExpense,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple.shade700,
+                            backgroundColor: Colors.pink.shade800,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -247,14 +247,14 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
-        prefixIcon: Icon(icon, color: Colors.purple.shade700),
+        prefixIcon: Icon(icon, color: Colors.pink.shade800),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.purple.shade700, width: 2),
+          borderSide: BorderSide(color: Colors.pink.shade800, width: 2),
         ),
         filled: true,
         fillColor: Colors.grey.shade50,
@@ -299,7 +299,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
                   onChanged: (ExpenseType? value) {
                     setState(() => _selectedType = value!);
                   },
-                  activeColor: Colors.purple.shade700,
+                  activeColor: Colors.pink.shade800,
                   contentPadding: EdgeInsets.symmetric(horizontal: 8),
                 ),
               ),
@@ -318,7 +318,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
                   onChanged: (ExpenseType? value) {
                     setState(() => _selectedType = value!);
                   },
-                  activeColor: Colors.purple.shade700,
+                  activeColor: Colors.pink.shade800,
                   contentPadding: EdgeInsets.symmetric(horizontal: 8),
                 ),
               ),
@@ -348,7 +348,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
               child: DropdownButtonFormField<String>(
                 value: _selectedCategory.isEmpty ? null : _selectedCategory,
                 decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.category, color: Colors.purple.shade700),
+                  prefixIcon: Icon(Icons.category, color: Colors.pink.shade800),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
@@ -368,7 +368,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
             SizedBox(width: 8),
             Container(
               decoration: BoxDecoration(
-                color: Colors.purple.shade100,
+                color: Colors.pink.shade100,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: IconButton(
@@ -379,10 +379,10 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.purple.shade700),
+                          valueColor: AlwaysStoppedAnimation(Colors.pink.shade800),
                         ),
                       )
-                    : Icon(Icons.auto_awesome, color: Colors.purple.shade700),
+                    : Icon(Icons.auto_awesome, color: Colors.pink.shade800),
                 tooltip: 'Get Smart Category',
               ),
             ),
@@ -416,7 +416,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today, color: Colors.purple.shade700),
+                Icon(Icons.calendar_today, color: Colors.pink.shade800),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -442,7 +442,7 @@ class _EnhancedAddExpenseDialogState extends State<EnhancedAddExpenseDialog>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: Colors.purple.shade700),
+            colorScheme: ColorScheme.light(primary: Colors.pink.shade800),
           ),
           child: child!,
         );
@@ -531,7 +531,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: shouldShowWarning
                       ? [Colors.orange.shade600, Colors.red.shade500]
-                      : [Colors.purple.shade700, Colors.pink.shade600],
+                      : [Colors.pink.shade800, Colors.pink.shade600],
                 ),
               ),
               padding: EdgeInsets.all(20),
@@ -832,7 +832,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                   label: Text(budget == null ? 'Set Budget' : 'Edit Budget'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: Colors.purple.shade700,
+                    foregroundColor: Colors.pink.shade800,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -864,7 +864,7 @@ class SmartBudgetSummaryCard extends StatelessWidget {
                   label: Text(budget == null ? 'Set Budget' : 'Edit Budget'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: Colors.purple.shade700,
+                    foregroundColor: Colors.pink.shade800,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: EdgeInsets.symmetric(vertical: 12),
                   ),
